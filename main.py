@@ -12,7 +12,9 @@ import requests
 from torrentool.torrent import Torrent
 
 
+print("Preparing series directory")
 prepare_dir(MEDIA_DIR_SERIES, search)
+print("Preparing films directory")
 prepare_dir(MEDIA_DIR_FILMS, search)
 
 with open("anime_ids.json") as fp:
@@ -22,14 +24,14 @@ with open("anime_ids.json") as fp:
 
 scrape = ptw.scrape(f"https://myanimelist.net/animelist/{MAL_ACCOUNT}?status=6")
 for anime in scrape:
-    anime_title = re.sub(r"[^0-9a-zA-Z\ \-\&]+", "", anime[0])
+    anime_title = re.sub(r"[^0-9a-zA-Z\ \-\&]+", " ", anime[0])
     anime_id = str(anime[1])
     anime_type = anime[2]
     anime_year = int(anime[3]["year"])
 
     if anime_type == "Movie" and anime_id in films.values():
         continue
-    elif anime_type == "TV" and anime_id in series.values():
+    elif anime_id in series.values():
         continue
 
     if anime_year >= 2020 and DISABLE_NEW_ANIME:
@@ -48,7 +50,7 @@ for anime in scrape:
         pref_quality="1080p", 
         keywords=["blu-ray", "blu ray", "(bd", "[bd", "bdrip"],
         type=anime_type,
-        min_gib=2 if anime_type == "TV" else 1,
+        min_gib=2 if anime_type == "TV" else None,  #TODO: this is quite jank, fix
         prefer_first_season=True
     )
 
@@ -64,10 +66,9 @@ for anime in scrape:
     if r.status_code != 200:
         raise ConnectionError("Failed to fetch torrent file")
     torrent_file_name = Torrent.from_string(r.content).name
-    deluged.execute("add", ("-p", TORRENT_DIR), (None, torrent_url))
-    time.sleep(10)
-    if not os.path.exists(TORRENT_DIR + torrent_file_name):
-        raise RuntimeError("Torrent client failed to create the media file")
+    success = deluged.execute("add", ("-p", TORRENT_DIR), (None, torrent_url))
+    if not success:
+        raise RuntimeError("Torrent client error")
     if anime_type == "Movie":
         new_file_dir = MEDIA_DIR_FILMS
         films[anime_title] = anime_id
@@ -75,7 +76,11 @@ for anime in scrape:
         new_file_dir = MEDIA_DIR_SERIES
         series[anime_title] = anime_id
     os.mkdir(new_file_dir + anime_title)
-    os.symlink(TORRENT_DIR + torrent_file_name, new_file_dir + anime_title + "/Season 1")
+    if any(torrent_file_name.endswith(x) for x in [".mp4", ".mkv"]):
+        new_filepath = "/" + torrent_file_name
+    else:
+        new_filepath = "/Season 1"
+    os.symlink(TORRENT_DIR + torrent_file_name, new_file_dir + anime_title + new_filepath)
     print(f"Added ({anime_type}) {anime_title}")
 
     with open("anime_ids.json", "w") as fp:

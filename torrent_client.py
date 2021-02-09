@@ -42,9 +42,11 @@ class BinaryOperator(Operator):
 
 class TorrentClient:
 
-    def __init__(self, command_name: str, operators: Dict[str, Operator]) -> None:
+    def __init__(self, command_name: str, operators: Dict[str, Operator], error_strings: List[str], success_strings: List[str]) -> None:
         self.command_name = command_name
         self.__operators = operators
+        self.__error_strings = error_strings
+        self.__success_strings = success_strings
 
     def get(self, name: str) -> Operator:
         op = self.__operators.get(name)
@@ -60,4 +62,9 @@ class TorrentClient:
             raise TypeError(f"Binary operator \"{op.command}\" given != 2 args")
         execute = op.execute(*args)
         print([self.command_name] + execute)
-        subprocess.run([self.command_name] + execute)
+        proc = subprocess.run([self.command_name] + execute, capture_output=True)
+        if any(x in str(proc.stderr + proc.stdout) for x in self.__error_strings):
+            return False
+        if any(x in str(proc.stderr + proc.stdout) for x in self.__success_strings):
+            return True
+        return False

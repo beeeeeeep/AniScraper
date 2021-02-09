@@ -46,11 +46,11 @@ class Scraper:
         return self.postprocess(subelements)
 
 
-class Search(Scraper):
+# class Search(Scraper):
 
-    def __init__(self, query_str: Callable[[str], str], parser: str, root: Tuple[str, List[str]], subelem_selectors: List[SubelementSelector] = [], map: Callable[[str], str] = None, postprocess: Callable[[List], str] = None):
-        self.query_str = query_str
-        super().__init__(parser, root, subelem_selectors=subelem_selectors, map=map, postprocess=postprocess)
+#     def __init__(self, query_str: Callable[[str], str], parser: str, root: Tuple[str, List[str]], subelem_selectors: List[SubelementSelector] = [], map: Callable[[str], str] = None, postprocess: Callable[[List], str] = None):
+#         self.query_str = query_str
+#         super().__init__(parser, root, subelem_selectors=subelem_selectors, map=map, postprocess=postprocess)
 
-    def search(self, query: str) -> str:
-       return self.scrape(self.query_str(query)) 
+#     def search(self, query: str) -> str:
+#        return self.scrape(self.query_str(query)) 
