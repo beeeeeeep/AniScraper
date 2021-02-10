@@ -1,18 +1,21 @@
+from data_scraping.datasource import WebScrapeSource
 from indexer import Indexer
-from scraper import Scraper, SubelementSelector
+from data_scraping.scraper import Scraper, SubelementSelector
 
 
-nyaa = Indexer(
-    url="https://nyaa.si/",
-    fields_format=lambda x: f"?f=1&c=1_2&q={x}&s=seeders&o=desc",
-    scraper=Scraper(
-        parser="lxml",
-        root=["tr", ["success", "default"]],
-        subelem_selectors=[
-            SubelementSelector([("td", [], 1), ("a", [], -1)], attribute="text"),
-            SubelementSelector([("td", ["text-center"], 0), ("a", [])], attribute="href"),
-            SubelementSelector([("td", ["text-center"], 3)], attribute="text"),
-            SubelementSelector([("td", ["text-center"], 1)], attribute="text")
-        ]
+indexer = Indexer(
+    WebScrapeSource(
+        query_formatter=lambda x: f"https://nyaa.si/?f=1&c=1_2&q={x.replace(' ', '+')}&s=seeders&o=desc",
+        scraper=Scraper(
+            parser="lxml",
+            root=["tr", ["success", "default"]],
+            subelem_selectors=[
+                SubelementSelector([("td", [], 1), ("a", [], -1)], attribute="text"),
+                SubelementSelector([("td", ["text-center"], 0), ("a", [])], attribute="href"),
+                SubelementSelector([("td", ["text-center"], 3)], attribute="text"),
+                SubelementSelector([("td", ["text-center"], 1)], attribute="text")
+            ],
+            postprocess=lambda x: [{"title": y[0], "link": "https://nyaa.si/" + y[1], "seeders": int(y[2]), "size": y[3]} for y in x]
+        )
     )
 )

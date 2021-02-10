@@ -1,22 +1,19 @@
+from data_scraping.datasource import DataSource
 from os import stat
 import re
 from typing import Callable, List, Tuple, Dict
 import requests
-from scraper import Scraper
 
 
 class Indexer:
 
-    def __init__(self, url: str, fields_format: Callable[[str], str], scraper: Scraper):
-        self.url = url
-        self.scraper = scraper
-        self.fields_format = fields_format
+    def __init__(self, data: DataSource):
+        self.__data = data
 
     @staticmethod
     def rank(data: List[Dict], pref_groups: List[str], pref_quality: str, keywords: List[str], type: str, min_gib: int = None, prefer_first_season: bool = False) -> List:
         ACCEPTABLE_KEYS = ["title", "link", "seeders", "size"]
         for entry in data:
-            entry["seeders"] = int(entry["seeders"])
             if list(entry.keys()) != ACCEPTABLE_KEYS:
                 raise TypeError(f"Expected keys {', '.join(ACCEPTABLE_KEYS)}")
         if min_gib is not None:
@@ -41,12 +38,6 @@ class Indexer:
         highest_ranked.sort(key=lambda x: x["seeders"], reverse=True)
         return highest_ranked
             
-
     def query(self, name: str) -> List:
-        name = name.replace(" ", "+")
-        try:
-            data = self.scraper.scrape(self.url + self.fields_format(name))
-        except ConnectionError:
-            raise ConnectionError(f"Could not connect to indexer {self.url}")
-        return data
+        return self.__data.fetch(name)
     
