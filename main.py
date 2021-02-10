@@ -2,7 +2,7 @@ from utils.files import prepare_dir
 from implementations.anime_list.mal import ptw
 from implementations.search.anilist import search
 from implementations.indexer.nyaa import indexer
-from implementations.torrent.deluged import deluged
+from implementations.torrent.deluged import torrent
 from indexer import Indexer
 from config import INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES, MEDIA_DIR_FILMS, TORRENT_DIR, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, INDEXER_QUALITY
 import os
@@ -102,7 +102,7 @@ def once():
         torrent_file_name = Torrent.from_string(r.content).name
 
         # Add torrent using url
-        success = deluged.execute("add", ("-p", TORRENT_DIR), (None, torrent_url))
+        success = torrent.execute("add", ("-p", TORRENT_DIR), (None, torrent_url))
 
         if not success:
             raise RuntimeError("Torrent client error")
