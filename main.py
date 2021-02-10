@@ -4,7 +4,7 @@ from implementations.search.anilist import search
 from implementations.indexer.nyaa import indexer
 from implementations.torrent.deluged import deluged
 from indexer import Indexer
-from config import MEDIA_DIR_SERIES, MEDIA_DIR_FILMS, TORRENT_DIR, DISABLE_NEW_ANIME, ACCOUNT
+from config import INDEXER_GROUPS, MEDIA_DIR_SERIES, MEDIA_DIR_FILMS, TORRENT_DIR, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, INDEXER_QUALITY
 import os
 import json
 import time
@@ -66,11 +66,11 @@ for anime in ptw_anime:
         continue
     top_ranks = Indexer.rank(
         indexer_query, 
-        pref_groups=["commie", "erai-raws", "horriblesubs", "subsplease"], 
-        pref_quality="1080p", 
-        keywords=["blu-ray", "blu ray", "(bd", "[bd", "bdrip"],
+        pref_groups=INDEXER_GROUPS, 
+        pref_quality=INDEXER_QUALITY, 
+        keywords=INDEXER_KEYWORDS,
         type=anime_type,
-        min_gib=3 if anime_type == "TV" else None,  #TODO: this is quite jank, fix
+        min_gib=MIN_SERIES_SIZE if anime_type == "TV" else None,  #TODO: this is quite jank, fix
         prefer_first_season=True
     )
 
