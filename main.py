@@ -1,10 +1,8 @@
+from torrent_client import TorrentClient
 from utils.files import prepare_dir
-from implementations.anime_list.mal import ptw
 from implementations.search.anilist import search
-from implementations.indexer.nyaa import indexer
-from implementations.torrent.deluged import torrent
 from indexer import Indexer
-from config import INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES, MEDIA_DIR_FILMS, TORRENT_DIR, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, INDEXER_QUALITY
+from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES, MEDIA_DIR_FILMS, TORRENT, TORRENT_DIR, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, INDEXER_QUALITY
 import os
 import json
 import time
@@ -12,8 +10,27 @@ import re
 import requests
 import sched
 import logging
+import importlib
 from torrentool.torrent import Torrent
+from animelist import AnimeList
 
+
+anime_list_imp = importlib.import_module(f"implementations.anime_list.{ANIME_LIST}")
+indexer_imp = importlib.import_module(f"implementations.indexer.{INDEXER}")
+torrent_imp = importlib.import_module(f"implementations.torrent.{TORRENT}")
+
+if not hasattr(anime_list_imp, "ptw") or not isinstance(anime_list_imp.ptw, AnimeList):
+    raise RuntimeError("anime_list must define a variable \"ptw\" of type AnimeList")
+
+if not hasattr(indexer_imp, "indexer") or not isinstance(indexer_imp.indexer, Indexer):
+    raise RuntimeError("indexer must define a variable \"indexer\" of type Indexer")
+
+if not hasattr(torrent_imp, "torrent") or not isinstance(torrent_imp.torrent, TorrentClient):
+    raise RuntimeError("torrent must define a variable \"torrent\" of type TorrentClient")
+
+ptw = anime_list_imp.ptw
+indexer = indexer_imp.indexer
+torrent = torrent_imp.torrent
 
 s = sched.scheduler(time.time, time.sleep)
 

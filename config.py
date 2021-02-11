@@ -8,3 +8,7 @@ INDEXER_KEYWORDS = ["blu-ray", "blu ray", "(bd", "[bd", "bdrip"]  # results cont
 INDEXER_QUALITY = "1080p"  # preferred quality. Not a hard limit.
 INDEXER_GROUPS = ["commie", "erai-raws", "horriblesubs", "subsplease"]  # preferred release groups
 INTERVAL = 10 * 60  # in seconds
+
+ANIME_LIST = "mal"
+INDEXER = "nyaa"
+TORRENT = "deluged"
