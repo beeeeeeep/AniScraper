@@ -12,14 +12,16 @@ class Operator(ABC):
 
 class UnaryOperator(Operator):
 
-    def __init__(self, command: str, *flags: List[str]):
+    def __init__(self, command: str, *flags: List[str], arg_flag: str):
         self.command = command
         self.flags = flags
+        self.arg_flag = arg_flag
 
-    def execute(self, *params: List[Tuple[str, str]]) -> List[str]:
+    def execute(self, *params: List[str]) -> List[str]:
         if len(params) != 1:
             raise TypeError("Unary operators must take only 1 argument")
-        cmd_str = [f"{self.command} {' '.join([y for x in params for y in x if y is not None])}"]
+        arg_str = (self.arg_flag + " " if len(self.arg_flag) > 0 else "") + params[0]
+        cmd_str = [f"{self.command} {arg_str}"]
         if len(self.flags) != 0:
             cmd_str[0] += f" {' '.join(self.flags)}"
         return cmd_str
@@ -27,14 +29,18 @@ class UnaryOperator(Operator):
 
 class BinaryOperator(Operator):
 
-    def __init__(self, command: str, *flags: List[str]):
+    def __init__(self, command: str, *flags: List[str], arg1_flag: str = "", arg2_flag: str = ""):
         self.command = command
         self.flags = flags
+        self.arg1_flag = arg1_flag
+        self.arg2_flag = arg2_flag
 
-    def execute(self, *params: List[Tuple[str, str]]) -> List[str]:
+    def execute(self, *params: List[str]) -> List[str]:
         if len(params) != 2:
             raise TypeError("Binary operators must take only 2 arguments")
-        cmd_str = [f"{self.command} {' '.join([y for x in params for y in x if y is not None])}"]
+        arg1_str = (self.arg1_flag + " " if len(self.arg1_flag) > 0 else "") + params[0]
+        arg2_str = (self.arg2_flag + " " if len(self.arg1_flag) > 0 else "") + params[1]
+        cmd_str = [f"{self.command} {arg1_str} {arg2_str}"]
         if len(self.flags) != 0:
             cmd_str[0] += f" {' '.join(self.flags)}"
         return cmd_str

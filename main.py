@@ -99,7 +99,7 @@ def once():
         torrent_file_name = Torrent.from_string(r.content).name
 
         # Add torrent using url
-        success = torrent.execute("add", ("-p", TORRENT_DIR), (None, torrent_url))
+        success = torrent.execute("add", TORRENT_DIR, torrent_url)
 
         if not success:
             raise RuntimeError("Torrent client error")
