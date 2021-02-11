@@ -28,9 +28,9 @@ if not hasattr(indexer_imp, "indexer") or not isinstance(indexer_imp.indexer, In
 if not hasattr(torrent_imp, "torrent") or not isinstance(torrent_imp.torrent, TorrentClient):
     raise RuntimeError("torrent must define a variable \"torrent\" of type TorrentClient")
 
-ptw = anime_list_imp.ptw
-indexer = indexer_imp.indexer
-torrent = torrent_imp.torrent
+ptw: AnimeList = anime_list_imp.ptw
+indexer: Indexer = indexer_imp.indexer
+torrent: TorrentClient = torrent_imp.torrent
 
 s = sched.scheduler(time.time, time.sleep)
 
@@ -54,10 +54,10 @@ def once():
     ptw_anime = ptw.fetch(ACCOUNT)
 
     for anime in ptw_anime:
-        anime_title = re.sub(r" +", " ", re.sub(r"[^0-9a-zA-Z\ \-\&]+", " ", anime[0])).strip()
-        anime_id = str(anime[1])
-        anime_type = anime[2]
-        anime_year = int(anime[3])
+        anime_title = re.sub(r" +", " ", re.sub(r"[^0-9a-zA-Z\ \-\&]+", " ", anime.title)).strip()
+        anime_id = anime.anime_id
+        anime_type = anime.type
+        anime_year = anime.year
 
         if anime_title in existing_files:
             continue
@@ -107,7 +107,7 @@ def once():
             logging.info(error_msg)
             continue
 
-        torrent_url = top_ranks[0]["link"]
+        torrent_url = top_ranks[0].link
 
         # GET .torrent file, parse and get torrent file name
         r = requests.get(torrent_url)

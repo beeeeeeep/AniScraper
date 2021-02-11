@@ -9,7 +9,11 @@ from data_scraping.scraper import Scraper, SubelementSelector
 
 def mal_json_parser(raw: str) -> str:
     data = json.loads(raw)
-    return [(re.sub(r"\(TV\)|\(Movie\)|\(OVA\)", "", x["anime_title"], flags=re.IGNORECASE), x["anime_id"], x["anime_media_type_string"], x["anime_season"]["year"]) for x in data]
+    return [
+        (re.sub(r"\(TV\)|\(Movie\)|\(OVA\)", "", x["anime_title"], flags=re.IGNORECASE), 
+        x["anime_id"], 
+        x["anime_media_type_string"], 
+        int(x["anime_season"]["year"])) for x in data]
 
 ptw = AnimeList(
     WebScrapeSource(
@@ -20,8 +24,7 @@ ptw = AnimeList(
             subelem_selectors=[
                 SubelementSelector([], attribute="data-items")
             ],
-            map=mal_json_parser,
-            postprocess=lambda x: x[0][0]
+            postprocess=lambda x: mal_json_parser(x[0][0])
         )
     )
 )

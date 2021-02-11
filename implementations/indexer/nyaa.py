@@ -15,7 +15,7 @@ indexer = Indexer(
                 SubelementSelector([("td", ["text-center"], 3)], attribute="text"),
                 SubelementSelector([("td", ["text-center"], 1)], attribute="text")
             ],
-            postprocess=lambda x: [{"title": y[0], "link": "https://nyaa.si/" + y[1], "seeders": int(y[2]), "size": y[3]} for y in x]
+            postprocess=lambda x: [(y[0], "https://nyaa.si/" + y[1], y[2], y[3]) for y in x]
         )
     )
 )
