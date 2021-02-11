@@ -20,15 +20,13 @@ s = sched.scheduler(time.time, time.sleep)
 def once():
     logging.info("Running scrape")
 
+    existing_files = os.listdir(MEDIA_DIR_SERIES) + os.listdir(MEDIA_DIR_FILMS)
+
     # Get IDs already in storage
     with open("anime_ids.json") as fp:
         data = json.load(fp)
         series = data[MEDIA_DIR_SERIES]
         films = data[MEDIA_DIR_FILMS]
-        blacklist = data.get("blacklist")  # To avoid repeating failing searches
-        if blacklist is None:
-            data["blacklist"] = []
-            blacklist = data["blacklist"]
 
     # Previously scraped anime IDs. This uses the PTW IDs to avoid waiting for anilist search IDs.
     with open("scraped.json") as fp:
@@ -44,6 +42,9 @@ def once():
         anime_type = anime[2]
         anime_year = int(anime[3])
 
+        if anime_title in existing_files:
+            continue
+
         if anime_id in scraped:
             continue
 
@@ -56,8 +57,6 @@ def once():
             continue
         time.sleep(1)  # avoid anilist rate limit
 
-        if search_id in blacklist:
-            continue
         if anime_type == "Movie" and search_id in films.values():
             continue
         elif search_id in series.values():
@@ -65,7 +64,6 @@ def once():
 
         if anime_year >= 2020 and DISABLE_NEW_ANIME:
             logging.info(f"{anime_title} is newer than 2020. Adding to blacklist.")
-            blacklist.append(search_id)
             continue
 
         # Query the indexer
@@ -74,7 +72,6 @@ def once():
         if len(indexer_query) == 0:
             error_msg = f"could not find anime with title {anime_title} on indexer. Adding to blacklist."
             logging.info(error_msg)
-            blacklist.append(search_id)
             continue
         top_ranks = Indexer.rank(
             indexer_query, 
