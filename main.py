@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(description="An anime torrent automation tool.")
     parser.add_argument("--remove-cache", "-rm", help="Removes AniScraper's record of this anime from its storage. Will prompt a re-download of the anime if its directory is also removed.", type=str, dest="rm_cache")
-    parser.add_argument("--clear-cache", help="Wipes AniScraper's cache. Prompts re-check of everything.", type=bool, dest="clear_cache")
+    parser.add_argument("--clear-cache", help="Wipes AniScraper's cache. Prompts re-check of everything.", action="store_true", dest="clear_cache")
 
     args = parser.parse_args()
     if args.rm_cache is not None:
@@ -178,7 +178,7 @@ if __name__ == "__main__":
                 exit()
         print(f"\"{args.rm_cache}\" not found in cache.")
         exit()
-    elif parser.clear_cache:
+    elif args.clear_cache:
         with open("anime_ids.json", "w") as fp:
             fp.write("{}")
         print(f"Cache cleared.")
