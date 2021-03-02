@@ -91,7 +91,8 @@ def once():
             logging.info(error_msg)
             continue
         top_ranks = Indexer.rank(
-            indexer_query, 
+            indexer_query,
+            title=anime_title,
             pref_groups=INDEXER_GROUPS, 
             pref_quality=INDEXER_QUALITY, 
             keywords=INDEXER_KEYWORDS,
