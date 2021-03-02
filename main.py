@@ -13,6 +13,7 @@ import logging
 import importlib
 from torrentool.torrent import Torrent
 from animelist import AnimeList
+from argparse import ArgumentParser
 
 
 anime_list_imp = importlib.import_module(f"implementations.anime_list.{ANIME_LIST}")
@@ -34,6 +35,10 @@ torrent: TorrentClient = torrent_imp.torrent
 
 s = sched.scheduler(time.time, time.sleep)
 
+if not os.path.exists("anime_ids.json"):
+    with open("anime_ids.json", "w") as fp:
+        fp.write("{}")
+
 def once():
     logging.info("Running scrape")
 
@@ -42,6 +47,10 @@ def once():
     # Get IDs already in storage
     with open("anime_ids.json") as fp:
         data = json.load(fp)
+        if data.get(MEDIA_DIR_SERIES) is None:
+            data[MEDIA_DIR_SERIES] = []
+        if data.get(MEDIA_DIR_FILMS) is None:
+            data[MEDIA_DIR_FILMS] = []
         series = data[MEDIA_DIR_SERIES]
         films = data[MEDIA_DIR_FILMS]
 
@@ -151,6 +160,29 @@ def once():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%d/%m/%Y %H:%M:%S")
+
+    parser = ArgumentParser(description="An anime torrent automation tool.")
+    parser.add_argument("--remove-cache", "-rm", help="Removes AniScraper's record of this anime from its storage. Will prompt a re-download of the anime if its directory is also removed.", type=str, dest="rm_cache")
+    parser.add_argument("--clear-cache", help="Wipes AniScraper's cache. Prompts re-check of everything.", type=bool, dest="clear_cache")
+
+    args = parser.parse_args()
+    if args.rm_cache is not None:
+        if not os.path.exists("anime_ids.json"):
+            exit()
+        with open("anime_ids.json") as fp:
+            anime_ids = json.load(fp)
+        for lst in anime_ids.values():
+            if args.rm_cache in lst:
+                del lst[args.rm_cache]
+                print(f"Removed \"{args.rm_cache}\" from cache.")
+                exit()
+        print(f"\"{args.rm_cache}\" not found in cache.")
+        exit()
+    elif parser.clear_cache:
+        with open("anime_ids.json", "w") as fp:
+            fp.write("{}")
+        print(f"Cache cleared.")
+        exit()
 
     # Lookup IDs of already downloaded stuff
     prepare_dir(MEDIA_DIR_FILMS, search)

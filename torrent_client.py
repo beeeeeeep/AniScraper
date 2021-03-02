@@ -67,7 +67,6 @@ class TorrentClient:
         if isinstance(op, BinaryOperator) and len(args) != 2:
             raise TypeError(f"Binary operator \"{op.command}\" given != 2 args")
         execute = op.execute(*args)
-        print([self.command_name] + execute)
         proc = subprocess.run([self.command_name] + execute, capture_output=True)
         if any(x in str(proc.stderr + proc.stdout) for x in self.__error_strings):
             return False
