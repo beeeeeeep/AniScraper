@@ -184,6 +184,9 @@ if __name__ == "__main__":
         print(f"Cache cleared.")
         exit()
 
+    if ACCOUNT == "":
+        exit("Account setting cannot be empty. Check config.py")
+
     # Lookup IDs of already downloaded stuff
     prepare_dir(MEDIA_DIR_FILMS, search)
     prepare_dir(MEDIA_DIR_SERIES, search)

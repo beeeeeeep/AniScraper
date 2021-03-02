@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import logging
 from typing import List, Dict, Tuple
 import subprocess
 
@@ -47,6 +48,7 @@ class BinaryOperator(Operator):
 
 
 class TorrentClient:
+    LINUX_ERRORS = ["No such file or directory"]
 
     def __init__(self, command_name: str, operators: Dict[str, Operator], error_strings: List[str], success_strings: List[str]) -> None:
         self.command_name = command_name
@@ -68,6 +70,9 @@ class TorrentClient:
             raise TypeError(f"Binary operator \"{op.command}\" given != 2 args")
         execute = op.execute(*args)
         proc = subprocess.run([self.command_name] + execute, capture_output=True)
+        if any(x in str(proc.stderr + proc.stdout) for x in self.LINUX_ERRORS):
+            logging.error(proc.stderr.split("\n")[-1])
+            return False
         if any(x in str(proc.stderr + proc.stdout) for x in self.__error_strings):
             return False
         if any(x in str(proc.stderr + proc.stdout) for x in self.__success_strings):
