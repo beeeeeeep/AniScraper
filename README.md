@@ -10,9 +10,13 @@ This software is in very early development stages, so there are many bugs right 
 - Python 3.8 and pip.
 - The default configuration requires a [MAL](https://myanimelist.net) account and [deluge-console](https://dev.deluge-torrent.org/wiki/UserGuide/ThinClient).
 
+## Configuration
+
+`config.py` contains parameters to control file, indexing and other configuration preferences.
+
 ## Installation
-Clone the repository, then run
 ```
+git clone https://github.com/beeeeeeep/AniScraper
 pip install -r requirements.txt
 ```
 
@@ -21,10 +25,6 @@ Launch with
 python main.py
 ```
 This runs a loop which fetches the PTW list every 10 minutes by default.
-
-## Configuration
-
-`config.py` contains parameters to control file, indexing and other configuration preferences. Modify this file then restart the command to apply.
 
 ## Extensibility
 This tool offers extensibility to allow use of other PTW lists, indexers and torrent clients. Implementations of these are declared in `implementations`. Which implementation is used is defined in `config.py` - this should be set as a string containing name of the python module. If you would like to extend these yourself, read on.
