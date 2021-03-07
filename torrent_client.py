@@ -49,8 +49,9 @@ class BinaryOperator(Operator):
 
 class TorrentClient:
     
-    def __init__(self, command_name: str, operators: Dict[str, Operator], error_strings: List[str], success_strings: List[str]) -> None:
+    def __init__(self, command_name: str, flags: List[str], operators: Dict[str, Operator], error_strings: List[str], success_strings: List[str]) -> None:
         self.command_name = command_name
+        self.flags = flags
         self.__operators = operators
         self.__error_strings = error_strings
         self.__success_strings = success_strings
@@ -69,10 +70,13 @@ class TorrentClient:
             raise TypeError(f"Binary operator \"{op.command}\" given != 2 args")
         execute = op.execute(*args)
         try:
-            proc = subprocess.run([self.command_name] + execute, capture_output=True)
+            print([self.command_name] + self.flags + execute)
+            proc = subprocess.run([self.command_name] + self.flags + execute, capture_output=True)
         except FileNotFoundError:
             logging.error(f"{self.command_name} was not found on the system. Make sure it is installed.")
             return False
+        logging.error(proc.stderr)
+        logging.error(proc.stdout)
         if any(x in str(proc.stderr + proc.stdout) for x in self.__error_strings):
             return False
         if any(x in str(proc.stderr + proc.stdout) for x in self.__success_strings):

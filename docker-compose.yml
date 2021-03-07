@@ -1,0 +1,29 @@
+services:
+  deluged:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/deluged/Dockerfile
+    volumes:
+      - ./deluge_config:/config
+      - ./films:/films
+      - ./series:/series
+      - ./torrents:/torrents
+    ports:
+      - "8112:8112"
+      - "58846:58846"
+      - "58847:58847"
+      - "58847:58847/udp"
+
+  aniscraper:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/aniscraper/Dockerfile
+    depends_on:
+      - "deluged"
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.57.0/24

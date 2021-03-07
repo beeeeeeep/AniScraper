@@ -186,6 +186,12 @@ if __name__ == "__main__":
 
     if ACCOUNT == "":
         exit("Account setting cannot be empty. Check config.py")
+    
+    if not os.path.isdir(MEDIA_DIR_FILMS):
+        os.mkdir(MEDIA_DIR_FILMS)
+    
+    if not os.path.isdir(MEDIA_DIR_SERIES):
+        os.mkdir(MEDIA_DIR_SERIES)
 
     # Lookup IDs of already downloaded stuff
     prepare_dir(MEDIA_DIR_FILMS, search)
