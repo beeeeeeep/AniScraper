@@ -2,21 +2,18 @@
 
 dev:
 	python3 copy_config.py
-	source config.env
-	docker-compose up
+	sudo docker-compose up
 
 devd:
 	python3 copy_config.py
-	source config.env
-	docker-compose up -d
+	sudo docker-compose up -d
 
 build:
 	python3 copy_config.py
-	source config.env
-	docker-compose build
+	sudo docker-compose build
 
 restart:
-	docker-compose restart
+	sudo docker-compose restart
 
 clean:
-	docker-compose down
+	sudo docker-compose down

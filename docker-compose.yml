@@ -5,9 +5,9 @@ services:
       dockerfile: ./dockerfiles/deluged/Dockerfile
     volumes:
       - ./deluge_config:/config
-      - ./films:/films
-      - ./series:/series
-      - ./torrents:/torrents
+      - ${MEDIA_DIR_FILMS}:/films
+      - ${MEDIA_DIR_SERIES}:/series
+      - ${TORRENT_DIR}:/torrents
     ports:
       - "8112:8112"
       - "58846:58846"
