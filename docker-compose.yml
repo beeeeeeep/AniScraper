@@ -1,10 +1,10 @@
 services:
-  deluged:
+  rtorrent:
     build:
       context: .
-      dockerfile: ./dockerfiles/deluged/Dockerfile
+      dockerfile: ./dockerfiles/rtorrent/Dockerfile
     volumes:
-      - ./deluge_config:/config
+      - ./rtorrent:/rtorrent
       - ${MEDIA_DIR_FILMS}:/films
       - ${MEDIA_DIR_SERIES}:/series
       - ${TORRENT_DIR}:/torrents
