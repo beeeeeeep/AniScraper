@@ -1,20 +1,12 @@
-from torrent_client import TorrentClient, BinaryOperator
+from torrent_client import PythonFunctions, ShellProgram, BinaryOperator
 from config import TORRENT_HOST, TORRENT_PORT
+from scgi.rtorrent_scgi import RTorrentSCGI
 
 
-torrent = TorrentClient(
-    command_name="xmlrpc",
-    params=[f"{TORRENT_HOST}:{TORRENT_PORT}"],
-    operators={
-        "add": BinaryOperator(lambda arg1, arg2: [
-            "load.start",
-            "",
-            arg1,
-            f"d.directory_base.set={arg2}"
-        ])
-    },
-    error_strings=["Torrent was not added"],
-    success_strings=["Torrent added!"]
+scgi = RTorrentSCGI("/config/.local/share/rtorrent/rtorrent.sock")
+
+torrent = PythonFunctions(
+    operators={"add": lambda x, y: scgi.request("load.start", "", x, f"d.directory_base.set={y}")}
 )
 
 #xmlrpc localhost load.start "" .torrent-file d.directory_base.set="dir"

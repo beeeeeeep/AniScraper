@@ -3,6 +3,8 @@ import logging
 from typing import Callable, List, Dict, Tuple
 import subprocess
 
+#TODO: redo this file
+
 
 class Operator(ABC):
 
@@ -33,7 +35,7 @@ class BinaryOperator(Operator):
         return self.keywords(*params)
 
 
-class TorrentClient:
+class ShellProgram:
     
     def __init__(self, command_name: str, params: List[str], operators: Dict[str, Operator], error_strings: List[str], success_strings: List[str]) -> None:
         self.command_name = command_name
@@ -68,3 +70,18 @@ class TorrentClient:
         if any(x in str(proc.stderr + proc.stdout) for x in self.__success_strings):
             return True
         return False
+
+
+class PythonFunctions:
+
+    def __init__(self, operators: Dict):
+        self.__operators = operators
+
+    def get(self, name: str) -> Operator:
+        op = self.__operators.get(name)
+        if op is None:
+            raise TypeError(f"Operator \"{name}\" is not supported by {self.command_name}")
+        return op
+
+    def execute(self, command: str, *args: List):
+        return self.get(command)(*args)

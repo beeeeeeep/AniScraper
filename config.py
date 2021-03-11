@@ -1,9 +1,10 @@
-MEDIA_DIR_SERIES = "/series"  # series are symlinked into this dir
-MEDIA_DIR_FILMS = "/films"  # films are symlinked into this dir
+MEDIA_DIR_SERIES = "/series/"  # series are symlinked into this dir
+MEDIA_DIR_FILMS = "/films/"  # films are symlinked into this dir
 TORRENT_DIR = "/torrents/"  # torrent files are stored here
+OPENVPN_PROFILE_PATH = ""
 
 DISABLE_NEW_ANIME = False  # disables downloading of anime newer than 2020, as these sometimes have unreliable batches.
-ACCOUNT = ""  # anime list account
+ACCOUNT = "ivs_eres"  # anime list account
 MIN_SERIES_SIZE = 2  # the minimum accepted size of TV shows in GiB
 INDEXER_KEYWORDS = ["blu-ray", "blu ray", "(bd", "[bd", "bdrip"]  # results containing these in the title are more likely to be chosen
 INDEXER_QUALITY = "1080p"  # preferred quality. Not a hard limit.
@@ -17,4 +18,4 @@ TORRENT_PORT = "5030"
 # Selects which implementations to use
 ANIME_LIST = "mal"
 INDEXER = "nyaa"
-TORRENT = "deluged"
+TORRENT = "rtorrent_xmlrpc"

@@ -1,10 +1,10 @@
-FROM python
+FROM ubuntu
 
-ADD ./dockerfiles/deluged/start.sh /start.sh
-
-RUN chmod +x /start.sh
+WORKDIR /
 
 RUN apt update && \
-    apt install -y deluged deluge-web
+    apt install -y rtorrent
 
-CMD ["/start.sh"]
+ADD .rtorrent.rc /root/.rtorrent.rc
+
+CMD rtorrent -o system.daemon.set=true

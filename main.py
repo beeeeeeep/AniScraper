@@ -1,4 +1,4 @@
-from torrent_client import TorrentClient
+from torrent_client import ShellProgram
 from utils.files import prepare_dir
 from implementations.search.anilist import search
 from indexer import Indexer
@@ -26,12 +26,12 @@ if not hasattr(anime_list_imp, "ptw") or not isinstance(anime_list_imp.ptw, Anim
 if not hasattr(indexer_imp, "indexer") or not isinstance(indexer_imp.indexer, Indexer):
     raise RuntimeError("indexer must define a variable \"indexer\" of type Indexer")
 
-if not hasattr(torrent_imp, "torrent") or not isinstance(torrent_imp.torrent, TorrentClient):
+if not hasattr(torrent_imp, "torrent"):
     raise RuntimeError("torrent must define a variable \"torrent\" of type TorrentClient")
 
 ptw: AnimeList = anime_list_imp.ptw
 indexer: Indexer = indexer_imp.indexer
-torrent: TorrentClient = torrent_imp.torrent
+torrent: ShellProgram = torrent_imp.torrent
 
 s = sched.scheduler(time.time, time.sleep)
 
@@ -126,7 +126,7 @@ def once():
         torrent_file_name = Torrent.from_string(r.content).name
 
         # Add torrent using url
-        success = torrent.execute("add", TORRENT_DIR, torrent_url)
+        success = torrent.execute("add", torrent_url, TORRENT_DIR)
 
         if not success:
             raise RuntimeError("Torrent client error")
