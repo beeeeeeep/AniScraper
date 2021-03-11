@@ -37,8 +37,6 @@ services:
       - ${MEDIA_DIR_SERIES}:/series
       - ${MEDIA_DIR_FILMS}:/films
       - ${TORRENT_DIR}:/torrents
-    depends_on:
-      - "openvpn"
 
   aniscraper:
     build:
