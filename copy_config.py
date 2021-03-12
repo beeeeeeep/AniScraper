@@ -5,7 +5,7 @@ from config import OPENVPN_PROFILE_PATH
 with open("./config.py") as fp:
     data = fp.readlines()
 
-data = [re.sub(r" ?= ?", "=", re.sub(r"\#.*$", "", x)) for x in data if any(x.split("=")[0].strip() == y for y in ["MEDIA_DIR_SERIES", "MEDIA_DIR_FILMS", "TORRENT_DIR", "OPENVPN_PROFILE_PATH"])]
+data = [re.sub(r" ?= ?", "=", re.sub(r"\#.*$", "", x)) for x in data if any(x.split("=")[0].strip() == y for y in ["MEDIA_DIR_SERIES", "MEDIA_DIR_FILMS", "TORRENT_DIR", "OPENVPN_PROFILE_PATH", "DOCKER_USER", "DOCKER_GROUP"])]
 with open(".env", "w") as fp:
     fp.write("".join(data))
 

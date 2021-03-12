@@ -23,7 +23,7 @@ services:
   flood:
     hostname: flood
     image: jesec/flood
-    user: ${USER}:${GROUP}
+    user: 1000:1000
     restart: unless-stopped
     command: --port 3000 --allowedpath /data
     environment:
@@ -38,7 +38,7 @@ services:
 
   rtorrent:
     image: jesec/rtorrent
-    user: ${USER}:${GROUP}
+    user: ${DOCKER_USER}:${DOCKER_GROUP}
     restart: unless-stopped
     command: -o network.port_range.set=50000-50000,system.daemon.set=true
     environment:
@@ -58,6 +58,7 @@ services:
       dockerfile: ./dockerfiles/aniscraper/Dockerfile
     volumes:
       - ./rtorrent_config:/config
+      - ./anime_ids.json:/app/anime_ids.json
       - ${MEDIA_DIR_SERIES}:/series
       - ${MEDIA_DIR_FILMS}:/films
       - ${TORRENT_DIR}:/torrents

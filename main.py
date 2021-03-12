@@ -2,7 +2,7 @@ from torrent_client import ShellProgram
 from utils.files import prepare_dir
 from implementations.search.anilist import search
 from indexer import Indexer
-from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES_INTERNAL, MEDIA_DIR_FILMS_INTERNAL, TORRENT, TORRENT_DIR_INTERNAL, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, INDEXER_QUALITY
+from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES_INTERNAL, MEDIA_DIR_FILMS_INTERNAL, TORRENT, TORRENT_DIR, TORRENT_DIR_INTERNAL, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, INDEXER_QUALITY
 import os
 import json
 import time
@@ -141,7 +141,7 @@ def once():
             new_filepath = "/" + torrent_file_name
         else:
             new_filepath = "/Season 1"
-        os.symlink(TORRENT_DIR_INTERNAL + torrent_file_name, new_file_dir + anime_title + new_filepath)
+        os.symlink(TORRENT_DIR + torrent_file_name, new_file_dir + anime_title + new_filepath)
         logging.info(f"Added ({anime_type}) {anime_title}")
 
         with open("anime_ids.json", "w") as fp:

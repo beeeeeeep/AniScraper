@@ -16,8 +16,8 @@ TORRENT_HOST = "localhost"
 TORRENT_PORT = "5030"
 
 # User which owns the MEDIA directories. Find using "id" command.
-USER = "1000"
-GROUP = "1000"
+DOCKER_USER = "1000"
+DOCKER_GROUP = "1000"
 
 # Selects which implementations to use
 ANIME_LIST = "mal"
