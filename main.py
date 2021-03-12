@@ -2,7 +2,7 @@ from torrent_client import ShellProgram
 from utils.files import prepare_dir
 from implementations.search.anilist import search
 from indexer import Indexer
-from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES, MEDIA_DIR_FILMS, TORRENT, TORRENT_DIR, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, INDEXER_QUALITY
+from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES_INTERNAL, MEDIA_DIR_FILMS_INTERNAL, TORRENT, TORRENT_DIR_INTERNAL, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, INDEXER_QUALITY
 import os
 import json
 import time
@@ -42,17 +42,17 @@ if not os.path.exists("anime_ids.json"):
 def once():
     logging.info("Running scrape")
 
-    existing_files = os.listdir(MEDIA_DIR_SERIES) + os.listdir(MEDIA_DIR_FILMS)
+    existing_files = os.listdir(MEDIA_DIR_SERIES_INTERNAL) + os.listdir(MEDIA_DIR_FILMS_INTERNAL)
 
     # Get IDs already in storage
     with open("anime_ids.json") as fp:
         data = json.load(fp)
-        if data.get(MEDIA_DIR_SERIES) is None:
-            data[MEDIA_DIR_SERIES] = []
-        if data.get(MEDIA_DIR_FILMS) is None:
-            data[MEDIA_DIR_FILMS] = []
-        series = data[MEDIA_DIR_SERIES]
-        films = data[MEDIA_DIR_FILMS]
+        if data.get(MEDIA_DIR_SERIES_INTERNAL) is None:
+            data[MEDIA_DIR_SERIES_INTERNAL] = []
+        if data.get(MEDIA_DIR_FILMS_INTERNAL) is None:
+            data[MEDIA_DIR_FILMS_INTERNAL] = []
+        series = data[MEDIA_DIR_SERIES_INTERNAL]
+        films = data[MEDIA_DIR_FILMS_INTERNAL]
 
     # Previously scraped anime IDs. This uses the PTW IDs to avoid waiting for anilist search IDs.
     with open("scraped.json") as fp:
@@ -126,22 +126,22 @@ def once():
         torrent_file_name = Torrent.from_string(r.content).name
 
         # Add torrent using url
-        success = torrent.execute("add", torrent_url, TORRENT_DIR)
+        success = torrent.execute("add", torrent_url, TORRENT_DIR_INTERNAL)
 
         if not success:
             raise RuntimeError("Torrent client error")
         if anime_type == "Movie":
-            new_file_dir = MEDIA_DIR_FILMS
+            new_file_dir = MEDIA_DIR_FILMS_INTERNAL
             films[anime_title] = search_id
         else:
-            new_file_dir = MEDIA_DIR_SERIES
+            new_file_dir = MEDIA_DIR_SERIES_INTERNAL
             series[anime_title] = search_id
         os.mkdir(new_file_dir + anime_title)
         if any(torrent_file_name.endswith(x) for x in [".mp4", ".mkv"]):
             new_filepath = "/" + torrent_file_name
         else:
             new_filepath = "/Season 1"
-        os.symlink(TORRENT_DIR + torrent_file_name, new_file_dir + anime_title + new_filepath)
+        os.symlink(TORRENT_DIR_INTERNAL + torrent_file_name, new_file_dir + anime_title + new_filepath)
         logging.info(f"Added ({anime_type}) {anime_title}")
 
         with open("anime_ids.json", "w") as fp:
@@ -186,16 +186,25 @@ if __name__ == "__main__":
 
     if ACCOUNT == "":
         exit("Account setting cannot be empty. Check config.py")
+
+    def add_trailing_slash(dir):
+        if not dir.endswith("/"):
+            return dir + "/"
+        return dir
+
+    MEDIA_DIR_FILMS_INTERNAL = add_trailing_slash(MEDIA_DIR_FILMS_INTERNAL)
+    MEDIA_DIR_SERIES_INTERNAL = add_trailing_slash(MEDIA_DIR_SERIES_INTERNAL)
+    TORRENT_DIR_INTERNAL = add_trailing_slash(TORRENT_DIR_INTERNAL)
     
-    if not os.path.isdir(MEDIA_DIR_FILMS):
-        os.mkdir(MEDIA_DIR_FILMS)
+    if not os.path.isdir(MEDIA_DIR_FILMS_INTERNAL):
+        os.mkdir(MEDIA_DIR_FILMS_INTERNAL)
     
-    if not os.path.isdir(MEDIA_DIR_SERIES):
-        os.mkdir(MEDIA_DIR_SERIES)
+    if not os.path.isdir(MEDIA_DIR_SERIES_INTERNAL):
+        os.mkdir(MEDIA_DIR_SERIES_INTERNAL)
 
     # Lookup IDs of already downloaded stuff
-    prepare_dir(MEDIA_DIR_FILMS, search)
-    prepare_dir(MEDIA_DIR_SERIES, search)
+    prepare_dir(MEDIA_DIR_FILMS_INTERNAL, search)
+    prepare_dir(MEDIA_DIR_SERIES_INTERNAL, search)
 
     s.enter(0, 1, once)
     s.run()

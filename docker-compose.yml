@@ -44,6 +44,9 @@ services:
       dockerfile: ./dockerfiles/aniscraper/Dockerfile
     volumes:
       - ./rtorrent_config:/config
+      - ${MEDIA_DIR_SERIES}:/series
+      - ${MEDIA_DIR_FILMS}:/films
+      - ${TORRENT_DIR}:/torrents
     depends_on:
       - "rtorrent"
       

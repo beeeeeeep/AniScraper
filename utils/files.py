@@ -5,6 +5,7 @@ from search import Search
 
 
 def prepare_dir(directory: str, search: Search) -> None:
+    print(f"Preparing directory {directory}")
     with open("anime_ids.json") as fp:
         anime_ids = json.load(fp)
     if anime_ids.get(directory) is None:
