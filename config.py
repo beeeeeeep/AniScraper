@@ -15,13 +15,16 @@ INTERVAL = 10 * 60  # interval between ptw list fetches in seconds
 TORRENT_HOST = "localhost"
 TORRENT_PORT = "5030"
 
+# User which owns the MEDIA directories. Find using "id" command.
+USER = "1000"
+GROUP = "1000"
+
 # Selects which implementations to use
 ANIME_LIST = "mal"
 INDEXER = "nyaa"
 TORRENT = "rtorrent_xmlrpc"
 
 # Don't change
-
 MEDIA_DIR_SERIES_INTERNAL = "/series/"  
 MEDIA_DIR_FILMS_INTERNAL = "/films/"  
-TORRENT_DIR_INTERNAL = "/torrents/"  
+TORRENT_DIR_INTERNAL = "/torrents/"
