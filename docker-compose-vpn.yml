@@ -23,7 +23,7 @@ services:
   flood:
     hostname: flood
     image: jesec/flood
-    user: 1000:1000
+    user: ${USER}:${GROUP}
     restart: unless-stopped
     command: --port 3000 --allowedpath /data
     environment:
@@ -38,7 +38,7 @@ services:
 
   rtorrent:
     image: jesec/rtorrent
-    user: 1000:1000
+    user: ${USER}:${GROUP}
     restart: unless-stopped
     command: -o network.port_range.set=50000-50000,system.daemon.set=true
     environment:
