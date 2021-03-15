@@ -33,8 +33,11 @@ The VPN container currently only supports .ovpn configuration files. Add the pat
 ```
 username
 password
-
 ```
+
+### Sonarr
+
+The Sonarr container runs by default on port 8989. Flood can be used as the download client, with host "flood" and port 3000.
 
 ### Launch
 
