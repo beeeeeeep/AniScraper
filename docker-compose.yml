@@ -49,4 +49,17 @@ services:
       - ${TORRENT_DIR}:/torrents
     depends_on:
       - "rtorrent"
+
+  sonarr:
+    image: linuxserver/sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - ./sonarr_data:/config
+      - ${MEDIA_DIR_SERIES}:/tv
+      - ${TORRENT_DIR}:/downloads
+    ports:
+      - 8989:8989
       
