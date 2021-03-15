@@ -11,7 +11,7 @@ services:
     image: jesec/flood
     user: 1000:1000
     restart: unless-stopped
-    command: --port 3000 --allowedpath /data
+    command: --port 3000
     environment:
       HOME: /config
     volumes:
