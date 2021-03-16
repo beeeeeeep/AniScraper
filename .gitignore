@@ -3,4 +3,6 @@ __pycache__/
 .venv/
 surfshark_configs/
 rtorrent/
+rtorrent_config/
+sonarr_data/
 ./surfshark_configs/
