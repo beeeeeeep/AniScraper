@@ -60,7 +60,11 @@ def once():
 
     # Get plan to watch list
     # format: List[Tuple[title, id, type, year]]
-    ptw_anime = ptw.fetch(ACCOUNT)
+    try:
+        ptw_anime = ptw.fetch(ACCOUNT)
+    except ConnectionError:
+        logging.warning("Failed to connect to anime list service")
+        return
 
     for anime in ptw_anime:
         anime_title = re.sub(r" +", " ", re.sub(r"[^0-9a-zA-Z\ \-\&]+", " ", anime.title)).strip()
@@ -107,7 +111,7 @@ def once():
             keywords=INDEXER_KEYWORDS,
             type=anime_type,
             min_gib=MIN_SERIES_SIZE if anime_type == "TV" else None,  #TODO: this is quite jank, fix
-            prefer_first_season=True
+            season=1
         )
 
         if len(top_ranks) == 0:

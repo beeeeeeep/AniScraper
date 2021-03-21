@@ -23,10 +23,20 @@ class Indexer:
         self.__data = data
 
     @staticmethod
-    def __filter_data(data: List[IndexerResult], title: str) -> List[IndexerResult]:
+    def __filter_string_closeness(data: List[IndexerResult], title: str) -> List[IndexerResult]:
         all_clean_titles = set(Indexer.__clean_title(x.title) for x in data)
         close_matches = difflib.get_close_matches(title, list(all_clean_titles), n=10, cutoff=0.8)
         return [x for x in data if Indexer.__clean_title(x.title) in close_matches]
+
+    @staticmethod
+    def __filter_season_match(data: List[IndexerResult], season: int) -> List[IndexerResult]:
+        res = []
+        for entry in data:
+            words = Indexer.__clean_title(entry.title).split(" ")
+            if any(re.search(f"s[0-{season - 1}{season + 1}-9]", x, re.IGNORECASE) for x in words):
+                continue
+            res.append(entry)
+        return res
 
     @staticmethod
     def __clean_title(title: str) -> str:
@@ -36,13 +46,14 @@ class Indexer:
         return re.sub(r" \- [0-9]{1,3}", "", clean_title).strip()
 
     @staticmethod
-    def rank(data: List[IndexerResult], title: str, pref_groups: List[str], pref_quality: str, keywords: List[str], type: str, min_gib: int = None, prefer_first_season: bool = False) -> List[IndexerResult]:
+    def rank(data: List[IndexerResult], title: str, pref_groups: List[str], pref_quality: str, keywords: List[str], type: str, season: int, min_gib: int = None) -> List[IndexerResult]:
         if min_gib is not None:
             data = [x for x in data if all(y not in x.size.lower() for y in ["mib", "kib"]) and float(x.size.lower().replace(" gib", "")) > min_gib]
             if len(data) == 0:
                 return []
         count = Counter()
-        filtered_data = Indexer.__filter_data(data, title)
+        filtered_data = Indexer.__filter_string_closeness(data, title)
+        filtered_data = Indexer.__filter_season_match(data, season)
         for entry in filtered_data:
             rank = 0
             if any(x.lower() in entry.title.lower() for x in pref_groups):
@@ -55,8 +66,6 @@ class Indexer:
                 rank -= 10
             if entry.seeders < 4:
                 rank -= 10
-            if prefer_first_season and re.match(r"^.* [2-9] [\[\(\-].*$", entry.title):
-                rank -= 2
             count[entry] = rank
         highest_ranked = [x[0] for x in count.most_common() if x[1] == count.most_common(1)[0][1]]
         highest_ranked.sort(key=lambda x: x.seeders, reverse=True)
