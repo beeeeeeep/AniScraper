@@ -1,5 +1,5 @@
 from service_classes.torrent_client import PythonFunctions
-from scgi.rtorrent_scgi import RTorrentSCGI
+from utils.rtorrent_scgi import RTorrentSCGI
 
 
 scgi = RTorrentSCGI("/config/.local/share/rtorrent/rtorrent.sock")
