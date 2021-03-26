@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from search import Search
+from service_classes.search import Search
 
 
 def prepare_dir(directory: str, search: Search) -> None:

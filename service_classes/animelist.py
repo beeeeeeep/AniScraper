@@ -20,4 +20,3 @@ class AnimeList:
     def fetch(self, user: str) -> List:
         data = self.__data.fetch(user)
         return [AnimeListResult(*x) for x in data]
-    

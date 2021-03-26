@@ -1,6 +1,6 @@
 from data_scraping.api import APIParser, JSONSelector
 from data_scraping.datasource import APISource
-from search import Search
+from service_classes.search import Search
 
 
 query = '''

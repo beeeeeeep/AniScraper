@@ -1,5 +1,4 @@
-from torrent_client import PythonFunctions, ShellProgram, BinaryOperator
-from config import TORRENT_HOST, TORRENT_PORT
+from service_classes.torrent_client import PythonFunctions
 from scgi.rtorrent_scgi import RTorrentSCGI
 
 

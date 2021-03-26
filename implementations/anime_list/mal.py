@@ -1,13 +1,11 @@
 from data_scraping.datasource import WebScrapeSource
-from animelist import AnimeList
+from service_classes.animelist import AnimeList
 import json
-import os
 import re
-import time
 from data_scraping.scraper import Scraper, SubelementSelector
 
 
-def mal_json_parser(raw: str) -> str:
+def mal_json_parser(raw: str) -> list:
     data = json.loads(raw)
     return [
         (re.sub(r"\(TV\)|\(Movie\)|\(OVA\)", "", x["anime_title"], flags=re.IGNORECASE), 

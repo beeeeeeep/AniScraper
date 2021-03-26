@@ -1,5 +1,5 @@
 from data_scraping.datasource import WebScrapeSource
-from indexer import Indexer
+from service_classes.indexer import Indexer
 from data_scraping.scraper import Scraper, SubelementSelector
 
 

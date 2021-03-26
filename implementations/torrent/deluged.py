@@ -1,6 +1,4 @@
-from torrent_client import ShellProgram, BinaryOperator
-from config import TORRENT_HOST, TORRENT_PORT
-
+from service_classes.torrent_client import ShellProgram, BinaryOperator
 
 torrent = ShellProgram(
     command_name="deluge-console",
