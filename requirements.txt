@@ -4,6 +4,7 @@ chardet==4.0.0
 idna==2.10
 lxml==4.6.2
 requests==2.25.1
+twisted
 soupsieve==2.1
 torrentool==1.1.0
 urllib3==1.26.3
