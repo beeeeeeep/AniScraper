@@ -1,6 +1,8 @@
 import unittest
 
 from implementations.indexer.nyaa import indexer
+from service_classes.indexer import Indexer
+from tests.data.indexer_test_data import data
 
 
 class IndexerTests(unittest.TestCase):
@@ -15,12 +17,18 @@ class IndexerTests(unittest.TestCase):
         self.assertIn(units, ["GiB", "MiB", "KiB"])
         self.assertGreater(float(size), 0.0)
 
-    def test_rank_seasons(self):
-        one_punch = indexer.query("one punch man")
-        opm_ranked = indexer.rank(one_punch, "One Punch Man", [], "1080p", [], "TV", 1)
-        opm_titles = [x.title for x in opm_ranked]
-        season2_matches = [x for x in opm_titles if any(y in x.lower() for y in ["s2", "season 2", "s02", "season 02"])]
-        self.assertEqual(len(season2_matches), 0, season2_matches)
+    def test_rank(self):
+        for item in data:
+            indexer_results = item.keys()
+            rank = Indexer.rank(indexer_results, "One Punch Man", ["HorribleSubs", "Erai-raws"], pref_quality="1080p",
+                                season=1, min_gib=1)
+            correct_ranks = {x.title: y for x, y in item.items()}
+            expected_length = len([x for x in correct_ranks.values() if x is not None])
+            difference_table = "\n".join([f"{x[:50]}          {y.title[:50]}" for x, y in zip(correct_ranks.keys(), rank)])
+            self.assertEqual(len(rank), expected_length, f"Ranked results had length {len(rank)}, expected {expected_length}")
+            for i, rankedResult in enumerate(rank):
+                self.assertEqual(i, correct_ranks.get(rankedResult.title),
+                                 f"Expected {rankedResult.title} to be rank {correct_ranks.get(rankedResult.title)}, was {i}\n\nDifference table:\n{difference_table}")
 
 
 if __name__ == '__main__':

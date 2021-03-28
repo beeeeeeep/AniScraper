@@ -1,11 +1,10 @@
-import difflib
-from data_scraping.datasource import DataSource
-from os import CLD_EXITED, close, stat
 import re
-from typing import Callable, List, Tuple, Dict
-import requests
-from collections import Counter
-import difflib
+from difflib import SequenceMatcher
+from typing import List
+
+import anitopy
+
+from data_scraping.datasource import DataSource
 
 
 class IndexerResult:
@@ -23,62 +22,47 @@ class Indexer:
         self.__data = data
 
     @staticmethod
-    def __filter_string_closeness(data: List[IndexerResult], title: str) -> List[IndexerResult]:
-        all_clean_titles = set(Indexer.__clean_title(x.title) for x in data)
-        close_matches = difflib.get_close_matches(title, list(all_clean_titles), n=10, cutoff=0.8)
-        return [x for x in data if Indexer.__clean_title(x.title) in close_matches]
+    def __parse_size(size: str) -> float:
+        if "MiB" in size:
+            return float(size.split(" ")[0]) / 1000
+        if "GiB" in size:
+            return float(size.split(" ")[0])
+        return 0
 
     @staticmethod
-    def __filter_season_match(data: List[IndexerResult], season: int) -> List[IndexerResult]:
-        res = []
+    def __string_closeness(a: str, b: str) -> float:
+        return SequenceMatcher(None, a, b).ratio()
+
+    @staticmethod
+    def rank(data: List[IndexerResult], title: str, pref_groups: List[str], pref_quality: str, season: int,
+             min_gib: int = None, prefer_bluray: bool = True) -> List[IndexerResult]:
+        ranks = {}
         for entry in data:
-            words = Indexer.__clean_title(entry.title).split(" ")
-            if any(re.search(f"s[0-{season - 1}{season + 1}-9]", x, re.IGNORECASE) for x in words):
+            size = Indexer.__parse_size(entry.size)
+            if size < min_gib:
                 continue
-            res.append(entry)
-        return res
-
-    @staticmethod
-    def __clean_title(title: str) -> str:
-        clean_title = re.sub(r"(?<!^)((\[|\().+(\]|\)).*)$", "", title)
-        clean_title = re.sub(r"\_", " ", clean_title)
-        clean_title = re.sub(r"[ \_]?(\([^\)]*\)|\[[^\]]*\])[ \_]?", "", clean_title)
-        return re.sub(r" \- [0-9]{1,3}", "", clean_title).strip()
-
-    @staticmethod
-    def rank(data: List[IndexerResult], title: str, pref_groups: List[str], pref_quality: str, keywords: List[str], type: str, season: int, min_gib: int = None) -> List[IndexerResult]:
-        if min_gib is not None:
-            data = [x for x in data if all(y not in x.size.lower() for y in ["mib", "kib"]) and float(x.size.lower().replace(" gib", "")) > min_gib]
-            if len(data) == 0:
-                return []
-        count = Counter()
-        filtered_data = Indexer.__filter_string_closeness(data, title)
-        filtered_data = Indexer.__filter_season_match(data, season)
-        for entry in filtered_data:
+            parse = anitopy.parse(entry.title)
+            if parse.get("anime_season") is not None and parse["anime_season"] != str(season):
+                continue
+            if isinstance(parse.get("episode_number", None), str):
+                # singular episode
+                if not (parse.get("episode_title") is not None and re.sub(r"[^a-zA-Z0-9]*", "",
+                                                                          parse["episode_title"]).isnumeric()):
+                    # Fixes batch formats like 01 ~ 12
+                    continue
             rank = 0
-            if any(x.lower() in entry.title.lower() for x in pref_groups):
+            if parse.get("release_group") is not None and parse["release_group"].lower() in pref_groups:
                 rank += 1
-            if any(x.lower() in entry.title.lower() for x in keywords):
+            if parse.get("video_resolution") is not None and pref_quality.replace("p", "") in parse[
+                "video_resolution"].lower():
                 rank += 1
-            if pref_quality.lower() in entry.title.lower():
+            if prefer_bluray and parse.get("source") is not None and any(
+                    x in parse["source"].lower() for x in ["bd", "blu"]):
                 rank += 1
-            if type == "TV" and "movie" in entry.title.lower():
-                rank -= 10
-            if entry.seeders < 4:
-                rank -= 10
-            count[entry] = rank
-        highest_ranked = [x[0] for x in count.most_common() if x[1] == count.most_common(1)[0][1]]
-        highest_ranked.sort(key=lambda x: x.seeders, reverse=True)
-        second = [x[1] for x in count.most_common() if x[1] != count.most_common(1)[0][1]]
-        if len(second) > 0:
-            second_count = second[0]
-            second_highest_rank = [x[0] for x in count.most_common() if x[1] == second_count]
-            second_highest_rank.sort(key=lambda x: x.seeders, reverse=True)
-            if second_highest_rank[0].seeders > highest_ranked[0].seeders * 5:
-                return second_highest_rank
-        return highest_ranked
-            
+            rank *= Indexer.__string_closeness(title.lower(), parse["anime_title"].lower())
+            ranks[entry] = rank
+        return [k for k, v in sorted(ranks.items(), key=lambda x: x[1])]
+
     def query(self, name: str) -> List[IndexerResult]:
         data = self.__data.fetch(name)
         return [IndexerResult(*x) for x in data]
-    

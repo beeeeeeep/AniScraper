@@ -1,20 +1,22 @@
-from service_classes.torrent_client import ShellProgram
-from utils.files import prepare_dir
-from implementations.search.anilist import search
-from service_classes.indexer import Indexer
-from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES_INTERNAL, MEDIA_DIR_FILMS_INTERNAL, TORRENT, TORRENT_DIR, TORRENT_DIR_INTERNAL, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, INDEXER_QUALITY
-import os
-import json
-import time
-import re
-import requests
-import sched
-import logging
 import importlib
-from torrentool.torrent import Torrent
-from service_classes.animelist import AnimeList
+import json
+import logging
+import os
+import sched
+import time
 from argparse import ArgumentParser
 
+import requests
+from torrentool.torrent import Torrent
+
+from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES_INTERNAL, MEDIA_DIR_FILMS_INTERNAL, \
+    TORRENT, TORRENT_DIR, TORRENT_DIR_INTERNAL, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, \
+    INDEXER_QUALITY, MIN_MOVIE_SIZE
+from implementations.search.anilist import search
+from service_classes.animelist import AnimeList
+from service_classes.indexer import Indexer
+from service_classes.torrent_client import ShellProgram
+from utils.files import prepare_dir
 
 anime_list_imp = importlib.import_module(f"implementations.anime_list.{ANIME_LIST}")
 indexer_imp = importlib.import_module(f"implementations.indexer.{INDEXER}")
@@ -35,31 +37,14 @@ torrent: ShellProgram = torrent_imp.torrent
 
 s = sched.scheduler(time.time, time.sleep)
 
-if not os.path.exists("anime_ids.json"):
-    with open("anime_ids.json", "w") as fp:
-        fp.write("{}")
 
-def once():
+def run_check():
     logging.info("Running scrape")
 
-    existing_files = os.listdir(MEDIA_DIR_SERIES_INTERNAL) + os.listdir(MEDIA_DIR_FILMS_INTERNAL)
-
     # Get IDs already in storage
-    with open("anime_ids.json") as fp:
-        data = json.load(fp)
-        if data.get(MEDIA_DIR_SERIES_INTERNAL) is None:
-            data[MEDIA_DIR_SERIES_INTERNAL] = []
-        if data.get(MEDIA_DIR_FILMS_INTERNAL) is None:
-            data[MEDIA_DIR_FILMS_INTERNAL] = []
-        series = data[MEDIA_DIR_SERIES_INTERNAL]
-        films = data[MEDIA_DIR_FILMS_INTERNAL]
-
-    # Previously scraped anime IDs. This uses the PTW IDs to avoid waiting for anilist search IDs.
-    with open("scraped.json") as fp:
-        scraped = json.load(fp)
+    anime_ids = load_anime_ids("anime_ids.json")
 
     # Get plan to watch list
-    # format: List[Tuple[title, id, type, year]]
     try:
         ptw_anime = ptw.fetch(ACCOUNT)
     except ConnectionError:
@@ -67,50 +52,31 @@ def once():
         return
 
     for anime in ptw_anime:
-        anime_title = re.sub(r" +", " ", re.sub(r"[^0-9a-zA-Z\ \-\&]+", " ", anime.title)).strip()
-        anime_id = anime.anime_id
-        anime_type = anime.type
+        anime_title = anime.title
         anime_year = anime.year
 
-        if anime_title in existing_files:
-            continue
-
-        if anime_id in scraped:
-            continue
-
-        scraped.append(anime_id)
-
         # Get anilist ID
-        search_id = search.fetch(anime_title)
-        if search_id is None:
-            logging.warning(f"ID search for {anime_title} returned None.")
-            continue
-        time.sleep(1)  # avoid anilist rate limit
-
-        if anime_type == "Movie" and search_id in films.values():
-            continue
-        elif search_id in series.values():
+        anilist_id = search.fetch(anime_title)
+        if anilist_id is None:
+            logging.warning(f"AniList search for {anime_title} was None.")
             continue
 
         if anime_year >= 2020 and DISABLE_NEW_ANIME:
-            logging.info(f"{anime_title} is newer than 2020. Adding to blacklist.")
+            logging.info(f"{anime_title} is newer than 2020.")
             continue
 
         # Query the indexer
         indexer_query = indexer.query(anime_title)
 
         if len(indexer_query) == 0:
-            error_msg = f"could not find anime with title {anime_title} on indexer. Adding to blacklist."
-            logging.info(error_msg)
+            logging.info(f"Could not find anime with title {anime_title} on indexer.")
             continue
         top_ranks = Indexer.rank(
             indexer_query,
-            title=anime_title,
-            pref_groups=INDEXER_GROUPS, 
-            pref_quality=INDEXER_QUALITY, 
+            pref_groups=INDEXER_GROUPS,
+            pref_quality=INDEXER_QUALITY,
             keywords=INDEXER_KEYWORDS,
-            type=anime_type,
-            min_gib=MIN_SERIES_SIZE if anime_type == "TV" else None,  #TODO: this is quite jank, fix
+            min_gib=MIN_SERIES_SIZE if anime.anime_type == "TV" else MIN_MOVIE_SIZE,
             season=1
         )
 
@@ -136,10 +102,10 @@ def once():
             raise RuntimeError("Torrent client error")
         if anime_type == "Movie":
             new_file_dir = MEDIA_DIR_FILMS_INTERNAL
-            films[anime_title] = search_id
+            films[anime_title] = anilist_id
         else:
             new_file_dir = MEDIA_DIR_SERIES_INTERNAL
-            series[anime_title] = search_id
+            series[anime_title] = anilist_id
         os.mkdir(new_file_dir + anime_title)
         if any(torrent_file_name.endswith(x) for x in [".mp4", ".mkv"]):
             new_filepath = "/" + torrent_file_name
@@ -151,6 +117,8 @@ def once():
         with open("anime_ids.json", "w") as fp:
             json.dump(data, fp, indent=4)
 
+        time.sleep(1)  # comply with anilist rate limit
+
     # TODO: maybe unjank this 
     with open("anime_ids.json", "w") as fp:
         json.dump(data, fp, indent=4)
@@ -160,14 +128,22 @@ def once():
 
     logging.info("Scrape finished")
 
-    s.enter(INTERVAL, 1, once)
+
+def run_once():
+    run_check()
+    s.enter(INTERVAL, 1, run_once)
+
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%d/%m/%Y %H:%M:%S")
+    logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(message)s",
+                        datefmt="%d/%m/%Y %H:%M:%S")
 
     parser = ArgumentParser(description="An anime torrent automation tool.")
-    parser.add_argument("--remove-cache", "-rm", help="Removes AniScraper's record of this anime from its storage. Will prompt a re-download of the anime if its directory is also removed.", type=str, dest="rm_cache")
-    parser.add_argument("--clear-cache", help="Wipes AniScraper's cache. Prompts re-check of everything.", action="store_true", dest="clear_cache")
+    parser.add_argument("--remove-cache", "-rm",
+                        help="Removes AniScraper's record of this anime from its storage. Will prompt a re-download of the anime if its directory is also removed.",
+                        type=str, dest="rm_cache")
+    parser.add_argument("--clear-cache", help="Wipes AniScraper's cache. Prompts re-check of everything.",
+                        action="store_true", dest="clear_cache")
 
     args = parser.parse_args()
     if args.rm_cache is not None:
@@ -191,18 +167,24 @@ if __name__ == "__main__":
     if ACCOUNT == "":
         exit("Account setting cannot be empty. Check config.py")
 
+
     def add_trailing_slash(dir):
         if not dir.endswith("/"):
             return dir + "/"
         return dir
 
+
+    if not os.path.exists("anime_ids.json"):
+        with open("anime_ids.json", "w") as fp:
+            fp.write("{}")
+
     MEDIA_DIR_FILMS_INTERNAL = add_trailing_slash(MEDIA_DIR_FILMS_INTERNAL)
     MEDIA_DIR_SERIES_INTERNAL = add_trailing_slash(MEDIA_DIR_SERIES_INTERNAL)
     TORRENT_DIR_INTERNAL = add_trailing_slash(TORRENT_DIR_INTERNAL)
-    
+
     if not os.path.isdir(MEDIA_DIR_FILMS_INTERNAL):
         os.mkdir(MEDIA_DIR_FILMS_INTERNAL)
-    
+
     if not os.path.isdir(MEDIA_DIR_SERIES_INTERNAL):
         os.mkdir(MEDIA_DIR_SERIES_INTERNAL)
 
@@ -210,5 +192,5 @@ if __name__ == "__main__":
     prepare_dir(MEDIA_DIR_FILMS_INTERNAL, search)
     prepare_dir(MEDIA_DIR_SERIES_INTERNAL, search)
 
-    s.enter(0, 1, once)
+    s.enter(0, 1, run_once)
     s.run()

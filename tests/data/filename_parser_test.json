@@ -38,5 +38,25 @@
         "bdrip": true,
         "group": null,
         "season": 1
+    },
+    "[Coalgirls]_Katanagatari_(1920x1080_Blu-Ray_FLAC)": {
+        "episode": null,
+        "batch": false,
+        "title": "Katanagatari",
+        "quality": "1080p",
+        "encoding": ["flac"],
+        "bdrip": true,
+        "group": "Coalgirls",
+        "season": 1
+    },
+    "Kimi no Na wa. 2016 1080p Remux AVC FLAC 5.1-SUCC": {
+        "episode": null,
+        "batch": false,
+        "title": "Kimi no Na wa. 2016",
+        "quality": "1080p",
+        "encoding": ["avc","flac","5.1"],
+        "bdrip": false,
+        "group": null,
+        "season": 1
     }
 }

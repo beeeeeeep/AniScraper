@@ -16,15 +16,10 @@ class AnimeInfo:
 
 
 def parse_filename(filename: str) -> AnimeInfo:
-    brackets = re.findall(r"\[[^]]*]|\([^)]*\)", filename)
-    clean_filename = re.sub(r"\[.*]|\(.*\)", "", filename).strip()
-    return AnimeInfo(
-        episode=1,
-        batch=False,
-        title="lmao",
-        quality="no",
-        encoding=[],
-        bdrip=True,
-        group=None,
-        season=0
-    )
+    pass
+    # brackets = re.finditer(r"\[[^]]*]|\([^)]*\)", filename)
+    # for bracket in brackets:
+    #
+    # substitutions = {
+    #     "_": " "
+    # }
