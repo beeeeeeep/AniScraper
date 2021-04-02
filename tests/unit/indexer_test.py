@@ -22,7 +22,7 @@ class IndexerTests(unittest.TestCase):
             indexer_results = item.keys()
             rank = Indexer.rank(indexer_results, "One Punch Man", ["HorribleSubs", "Erai-raws"], pref_quality="1080p",
                                 season=1, min_gib=1)
-            correct_ranks = {x.title: y for x, y in item.items()}
+            correct_ranks = {x.title: y for x, y in item.items() if y is not None}
             expected_length = len([x for x in correct_ranks.values() if x is not None])
             diff_table_list = [("Correct" + " " * 43, "Actual")] + [(x[:50], y.title[:50]) for x, y in zip(correct_ranks.keys(), rank)]
             difference_table = "\n".join([f"{x}          {y}" for x, y in diff_table_list])

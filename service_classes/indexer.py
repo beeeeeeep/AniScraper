@@ -17,7 +17,6 @@ class IndexerResult:
 
 
 class Indexer:
-
     def __init__(self, data: DataSource):
         self.__data = data
 
@@ -37,11 +36,11 @@ class Indexer:
     def rank(data: List[IndexerResult], title: str, pref_groups: List[str], pref_quality: str, season: int,
              min_gib: int = None, prefer_bluray: bool = True) -> List[IndexerResult]:
         ranks = {}
-        for entry in data:
+        anitopy_parse = [(x, anitopy.parse(x.title)) for x in data]
+        for entry, parse in anitopy_parse:
             size = Indexer.__parse_size(entry.size)
             if size < min_gib:
                 continue
-            parse = anitopy.parse(entry.title)
             if parse.get("anime_season") is not None and parse["anime_season"] != str(season):
                 continue
             if isinstance(parse.get("episode_number", None), str):
@@ -58,10 +57,10 @@ class Indexer:
                 rank += 1
             if prefer_bluray and parse.get("source") is not None and any(
                     x in parse["source"].lower() for x in ["bd", "blu"]):
-                rank += 1
+                rank += 2
             rank *= Indexer.__string_closeness(title.lower(), parse["anime_title"].lower())
             ranks[entry] = rank
-        return [k for k, v in sorted(ranks.items(), key=lambda x: x[1])]
+        return [k for k, v in reversed(sorted(ranks.items(), key=lambda x: x[1]))]
 
     def query(self, name: str) -> List[IndexerResult]:
         data = self.__data.fetch(name)
