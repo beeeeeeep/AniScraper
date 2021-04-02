@@ -24,7 +24,8 @@ class IndexerTests(unittest.TestCase):
                                 season=1, min_gib=1)
             correct_ranks = {x.title: y for x, y in item.items()}
             expected_length = len([x for x in correct_ranks.values() if x is not None])
-            difference_table = "\n".join([f"{x[:50]}          {y.title[:50]}" for x, y in zip(correct_ranks.keys(), rank)])
+            diff_table_list = [("Correct" + " " * 43, "Actual")] + [(x[:50], y.title[:50]) for x, y in zip(correct_ranks.keys(), rank)]
+            difference_table = "\n".join([f"{x}          {y}" for x, y in diff_table_list])
             self.assertEqual(len(rank), expected_length, f"Ranked results had length {len(rank)}, expected {expected_length}")
             for i, rankedResult in enumerate(rank):
                 self.assertEqual(i, correct_ranks.get(rankedResult.title),
