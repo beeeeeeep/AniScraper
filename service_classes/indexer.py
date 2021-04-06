@@ -30,7 +30,8 @@ class Indexer:
 
     @staticmethod
     def __string_closeness(a: str, b: str) -> float:
-        return 1 / (textdistance.hamming(a, b) + 1)
+        # TODO: determine best similarity metric
+        return textdistance.hamming.normalized_similarity(a, b)
 
     @staticmethod
     def rank(data: List[IndexerResult], title: str, pref_groups: List[str], pref_quality: str, season: int,
@@ -77,8 +78,11 @@ class Indexer:
                     raise Exception("Hopefully not possible")
                 if any(x in source.lower() for x in ["bd", "blu"]):
                     rank += 2
-            rank *= Indexer.__string_closeness(title.lower(), parse["anime_title"].lower())
-            rank *= entry.seeders * (1 + seeders_importance)
+            title_similarity = Indexer.__string_closeness(title.lower(), parse["anime_title"].lower())
+            if title_similarity < 0.5:
+                continue
+            rank *= title_similarity
+            rank += entry.seeders * seeders_importance
             ranks[entry] = rank
         if not return_ranks:
             return [k for k, v in reversed(sorted(ranks.items(), key=lambda x: x[1]))]

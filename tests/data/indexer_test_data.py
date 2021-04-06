@@ -61,11 +61,11 @@ tests = [
         "data": {
             IndexerResult("[Utsukushii-Raws+Anon subs] Mononoke (BD 1280x720 H264 FLAC 2.0) Ayakashi - Bakeneko (BD 960x720 H264 FLAC 2.0)", "", 22, "8.7 GiB"): 0,
             IndexerResult("[anon] Mononoke (BD 720p)", "", 19, "7.0 GiB"): 0,
-            IndexerResult("Princess_Mononoke_(1997)_[1080p,BluRay,flac,x264]_-_THORA", "", 18, "17.4 GiB"): 1,
-            IndexerResult("[DragsterPS] Princess Mononoke [1080p] [Multi-Audio] [Multi-Subs]", "", 10, "19.5 GiB"): 1,
+            IndexerResult("Princess_Mononoke_(1997)_[1080p,BluRay,flac,x264]_-_THORA", "", 18, "17.4 GiB"): None,
+            IndexerResult("[DragsterPS] Princess Mononoke [1080p] [Multi-Audio] [Multi-Subs]", "", 10, "19.5 GiB"): None,
             IndexerResult("[reddeimon] Mononoke 2007 [1080p Bluray Rip x264 FLAC]", "", 8, "12.8 GiB"): 0,
-            IndexerResult("[HorribleSubs] Fukigen na Mononokean S2 - 09 [1080p].mkv", "", 6, "622.2 MiB"): 1,
-            IndexerResult("[Erai-raws] Mononoke-hime [1080p][Multiple Subtitle].mkv", "", 6, "6.5 GiB"): None,
+            IndexerResult("[HorribleSubs] Fukigen na Mononokean S2 - 09 [1080p].mkv", "", 6, "622.2 MiB"): None,
+            IndexerResult("[Erai-raws] Mononoke-hime [1080p][Multiple Subtitle].mkv", "", 6, "6.5 GiB"): 1,  # title very similar
             # IndexerResult("[kamineko] Fukigen na Mononokean | The Morose Mononokean S1 (2016) [BD 1080p h264 FLAC]", "", 4, "9.1 GiB"): None,
             # IndexerResult("[HorribleSubs] Fukigen na Mononokean - 01 [1080p].mkv", "", 4, "541.1 MiB"): None,
             # IndexerResult("[Erai-raws] Fukigen na Mononokean Tsuzuki - 01 ~ 13 [1080p][Multiple Subtitle]", "", 4, "9.1 GiB"): None,
