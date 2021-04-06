@@ -2,7 +2,7 @@ import unittest
 
 from implementations.indexer.nyaa import indexer
 from service_classes.indexer import Indexer
-from tests.data.indexer_test_data import data
+from tests.data.indexer_test_data import tests
 
 
 class IndexerTests(unittest.TestCase):
@@ -18,18 +18,29 @@ class IndexerTests(unittest.TestCase):
         self.assertGreater(float(size), 0.0)
 
     def test_rank(self):
-        for item in data:
-            indexer_results = item.keys()
-            rank = Indexer.rank(indexer_results, "One Punch Man", ["HorribleSubs", "Erai-raws"], pref_quality="1080p",
-                                season=1, min_gib=1)
-            correct_ranks = {x.title: y for x, y in item.items() if y is not None}
-            expected_length = len([x for x in correct_ranks.values() if x is not None])
-            diff_table_list = [("Correct" + " " * 43, "Actual")] + [(x[:50], y.title[:50]) for x, y in zip(correct_ranks.keys(), rank)]
-            difference_table = "\n".join([f"{x}          {y}" for x, y in diff_table_list])
-            self.assertEqual(len(rank), expected_length, f"Ranked results had length {len(rank)}, expected {expected_length}")
-            for i, rankedResult in enumerate(rank):
-                self.assertEqual(i, correct_ranks.get(rankedResult.title),
-                                 f"Expected {rankedResult.title} to be rank {correct_ranks.get(rankedResult.title)}, was {i}\n\nDifference table:\n{difference_table}")
+        for i, item in enumerate(tests):
+            with self.subTest(item["name"], i=i):
+                if not item["enable"]:
+                    continue
+                indexer_results = item["data"].keys()
+                rank = Indexer.rank(indexer_results, **item["rank_settings"], return_ranks=True)
+                correct_ranks = {x.title: y for x, y in item["data"].items() if y is not None}
+                correct_ranks = dict(sorted(correct_ranks.items(), key=lambda x: x[1]))
+                correct_items = [x for x, y in item["data"].items() if y is not None]
+                diff_table_list = [("Correct" + " " * 43, "Actual")] + [(x[:50], y[0].title[:50] + " " + str(y[1])) for x, y
+                                                                        in zip(correct_ranks.keys(), rank)]
+                difference_table = "\n".join([f"{x}          {y}" for x, y in diff_table_list])
+                self.assertEqual(len(rank), len(correct_items),
+                                 f"Ranked results had length {len(rank)}, expected {len(correct_items)}\n"
+                                 f"Expected: {[x.title[:25] for x in correct_items]}\n"
+                                 f"Was: {[x[0].title[:25] for x in rank]}")
+                last_highest = 0
+                for rankedResult, num_rank in rank:
+                    correct_rank = correct_ranks.get(rankedResult.title)
+                    if correct_rank == last_highest + 1:
+                        last_highest += 1
+                    self.assertEqual(last_highest, correct_ranks.get(rankedResult.title),
+                                     f"Expected {rankedResult.title} to be rank {correct_ranks.get(rankedResult.title)}, was {last_highest}\n\nDifference table:\n{difference_table}")
 
 
 if __name__ == '__main__':

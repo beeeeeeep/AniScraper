@@ -1,5 +1,5 @@
 import re
-from difflib import SequenceMatcher
+import textdistance
 from typing import List
 
 import anitopy
@@ -30,21 +30,34 @@ class Indexer:
 
     @staticmethod
     def __string_closeness(a: str, b: str) -> float:
-        return SequenceMatcher(None, a, b).ratio()
+        return 1 / (textdistance.hamming(a, b) + 1)
 
     @staticmethod
     def rank(data: List[IndexerResult], title: str, pref_groups: List[str], pref_quality: str, season: int,
-             min_gib: int = None, prefer_bluray: bool = True) -> List[IndexerResult]:
+             min_gib: int = None, prefer_bluray: bool = True, min_seeders: int = 0, seeders_importance: float = 1,
+             return_ranks: bool = False) -> List[IndexerResult]:
+        EPISODE_NUMBER_EXCEPTIONS = ["539"]
+        if season < 1:
+            raise ValueError("Season cannot be less than one")
         ranks = {}
         anitopy_parse = [(x, anitopy.parse(x.title)) for x in data]
         for entry, parse in anitopy_parse:
+            if entry.seeders < min_seeders:
+                continue
+            if any(f"season {x}" in entry.title.lower() for x in range(1, 100) if x != season):
+                # missed case by anitopy season parsing
+                continue
             size = Indexer.__parse_size(entry.size)
             if size < min_gib:
                 continue
-            if parse.get("anime_season") is not None and parse["anime_season"] != str(season):
-                continue
-            if isinstance(parse.get("episode_number", None), str):
-                # singular episode
+            if parse.get("anime_season") is not None:
+                if isinstance(parse["anime_season"], str) and parse["anime_season"] != str(season):
+                    continue
+                if isinstance(parse["anime_season"], list) and str(season) not in parse["anime_season"]:
+                    continue
+            if isinstance(parse.get("episode_number", None), str) and parse[
+                "episode_number"] not in EPISODE_NUMBER_EXCEPTIONS:
+                # ignore singular episode
                 if not (parse.get("episode_title") is not None and re.sub(r"[^a-zA-Z0-9]*", "",
                                                                           parse["episode_title"]).isnumeric()):
                     # Fixes batch formats like 01 ~ 12
@@ -54,13 +67,22 @@ class Indexer:
                 rank += 1
             if parse.get("video_resolution") is not None and pref_quality.replace("p", "") in parse[
                 "video_resolution"].lower():
-                rank += 1
-            if prefer_bluray and parse.get("source") is not None and any(
-                    x in parse["source"].lower() for x in ["bd", "blu"]):
                 rank += 2
+            if prefer_bluray and parse.get("source") is not None:
+                if isinstance(parse["source"], str):
+                    source = parse["source"]
+                elif isinstance(parse["source"], list):
+                    source = " ".join(parse["source"])
+                else:
+                    raise Exception("Hopefully not possible")
+                if any(x in source.lower() for x in ["bd", "blu"]):
+                    rank += 2
             rank *= Indexer.__string_closeness(title.lower(), parse["anime_title"].lower())
+            rank *= entry.seeders * (1 + seeders_importance)
             ranks[entry] = rank
-        return [k for k, v in reversed(sorted(ranks.items(), key=lambda x: x[1]))]
+        if not return_ranks:
+            return [k for k, v in reversed(sorted(ranks.items(), key=lambda x: x[1]))]
+        return [(k, v) for k, v in reversed(sorted(ranks.items(), key=lambda x: x[1]))]
 
     def query(self, name: str) -> List[IndexerResult]:
         data = self.__data.fetch(name)
