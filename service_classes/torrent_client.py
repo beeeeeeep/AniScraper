@@ -50,7 +50,7 @@ class ShellProgram:
             raise TypeError(f"Operator \"{name}\" is not supported by {self.command_name}")
         return op
 
-    def execute(self, command: str, *args: List[Tuple[str, str]]) -> bool:
+    def execute(self, command: str, *args: str) -> bool:
         op = self.get(command)
         if isinstance(op, UnaryOperator) and len(args) != 1:
             raise TypeError(f"Unary operator \"{command}\" given {len(args)} args")

@@ -5,18 +5,19 @@ import os
 import sched
 import time
 from argparse import ArgumentParser
+from datetime import datetime
 
 import requests
 from torrentool.torrent import Torrent
 
 from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES_INTERNAL, MEDIA_DIR_FILMS_INTERNAL, \
-    TORRENT, TORRENT_DIR, TORRENT_DIR_INTERNAL, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_KEYWORDS, \
-    INDEXER_QUALITY, MIN_MOVIE_SIZE
+    TORRENT, TORRENT_DIR, TORRENT_DIR_INTERNAL, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_PREFER_BD, \
+    INDEXER_QUALITY, MIN_MOVIE_SIZE, MIN_SEEDERS
 from implementations.search.anilist import search
 from service_classes.animelist import AnimeList
 from service_classes.indexer import Indexer
 from service_classes.torrent_client import ShellProgram
-from utils.files import prepare_dir
+from utils.files import setup_dir, load_anime_ids, store_anime_ids
 
 anime_list_imp = importlib.import_module(f"implementations.anime_list.{ANIME_LIST}")
 indexer_imp = importlib.import_module(f"implementations.indexer.{INDEXER}")
@@ -38,10 +39,17 @@ torrent: ShellProgram = torrent_imp.torrent
 s = sched.scheduler(time.time, time.sleep)
 
 
+def get_torrent_name(torrent_url):
+    r = requests.get(torrent_url)
+    if r.status_code != 200:
+        raise ConnectionError("Failed to fetch torrent file")
+    return Torrent.from_string(r.content).name
+
+
 def run_check():
     logging.info("Running scrape")
 
-    # Get IDs already in storage
+    # Get IDs in storage
     anime_ids = load_anime_ids("anime_ids.json")
 
     # Get plan to watch list
@@ -55,77 +63,65 @@ def run_check():
         anime_title = anime.title
         anime_year = anime.year
 
-        # Get anilist ID
-        anilist_id = search.fetch(anime_title)
+        # Get AniList ID
+        anilist_id, anilist_title = search.fetch(anime_title)
         if anilist_id is None:
-            logging.warning(f"AniList search for {anime_title} was None.")
+            logging.warning(f"No AniList results for {anime_title}. Ignoring.")
             continue
 
-        if anime_year >= 2020 and DISABLE_NEW_ANIME:
-            logging.info(f"{anime_title} is newer than 2020.")
+        if anime_year >= datetime.now().year - 1 and DISABLE_NEW_ANIME:
+            logging.info(f"{anime_title} is newer than 2020. Ignoring.")
             continue
 
         # Query the indexer
         indexer_query = indexer.query(anime_title)
 
         if len(indexer_query) == 0:
-            logging.info(f"Could not find anime with title {anime_title} on indexer.")
+            logging.info(f"Could not find anime with title {anime_title} on indexer. Ignoring.")
             continue
         top_ranks = Indexer.rank(
             indexer_query,
+            title=anilist_title,
             pref_groups=INDEXER_GROUPS,
             pref_quality=INDEXER_QUALITY,
-            keywords=INDEXER_KEYWORDS,
-            min_gib=MIN_SERIES_SIZE if anime.anime_type == "TV" else MIN_MOVIE_SIZE,
-            season=1
+            season=1,
+            min_gib=MIN_MOVIE_SIZE if anime.anime_type == "Movie" else MIN_SERIES_SIZE,
+            min_seeders=MIN_SEEDERS,
+            seeders_importance=0.5  # TODO: find best
         )
 
         if len(top_ranks) == 0:
-            error_msg = f"INFO: Could not find a suitable batch for {anime_title}."
-            if anime_year > 2018:
-                error_msg += "This anime aired in 2019 or later, so it is possible it doesn't yet have batches. Try adding it on Sonarr."
+            error_msg = f"INFO: Could not find a suitable batch for {anime_title}. "
+            recent = datetime.now().year - 3
+            if anime_year > recent:
+                error_msg += f"This anime aired later than {recent}, so it may not have batches yet. Try adding it on Sonarr."
             logging.info(error_msg)
             continue
 
         torrent_url = top_ranks[0].link
 
         # GET .torrent file, parse and get torrent file name
-        r = requests.get(torrent_url)
-        if r.status_code != 200:
-            raise ConnectionError("Failed to fetch torrent file")
-        torrent_file_name = Torrent.from_string(r.content).name
+        torrent_file_name = get_torrent_name(torrent_url)
 
         # Add torrent using url
         success = torrent.execute("add", torrent_url, TORRENT_DIR_INTERNAL)
 
         if not success:
             raise RuntimeError("Torrent client error")
-        if anime_type == "Movie":
-            new_file_dir = MEDIA_DIR_FILMS_INTERNAL
-            films[anime_title] = anilist_id
+        if anime.type == "Movie":
+            media_dir = MEDIA_DIR_FILMS_INTERNAL
         else:
-            new_file_dir = MEDIA_DIR_SERIES_INTERNAL
-            series[anime_title] = anilist_id
-        os.mkdir(new_file_dir + anime_title)
-        if any(torrent_file_name.endswith(x) for x in [".mp4", ".mkv"]):
-            new_filepath = "/" + torrent_file_name
-        else:
-            new_filepath = "/Season 1"
-        os.symlink(TORRENT_DIR + torrent_file_name, new_file_dir + anime_title + new_filepath)
-        logging.info(f"Added ({anime_type}) {anime_title}")
-
-        with open("anime_ids.json", "w") as fp:
-            json.dump(data, fp, indent=4)
+            media_dir = MEDIA_DIR_SERIES_INTERNAL
+        if not media_dir.endswith("/"):
+            media_dir += "/"
+        os.mkdir(media_dir + anime_title)
+        os.symlink(TORRENT_DIR + torrent_file_name, media_dir + anime_title + "/Season 1" if anime.type == "TV" else "")
+        anime_ids["downloaded"].append(anilist_id)
+        logging.info(f"Added ({anime.type}) {anilist_title}")
 
         time.sleep(1)  # comply with anilist rate limit
 
-    # TODO: maybe unjank this 
-    with open("anime_ids.json", "w") as fp:
-        json.dump(data, fp, indent=4)
-
-    with open("scraped.json", "w") as fp:
-        json.dump(scraped, fp, indent=4)
-
+    store_anime_ids("./anime_ids.json", anime_ids)
     logging.info("Scrape finished")
 
 
@@ -139,58 +135,17 @@ if __name__ == "__main__":
                         datefmt="%d/%m/%Y %H:%M:%S")
 
     parser = ArgumentParser(description="An anime torrent automation tool.")
-    parser.add_argument("--remove-cache", "-rm",
-                        help="Removes AniScraper's record of this anime from its storage. Will prompt a re-download of the anime if its directory is also removed.",
-                        type=str, dest="rm_cache")
-    parser.add_argument("--clear-cache", help="Wipes AniScraper's cache. Prompts re-check of everything.",
-                        action="store_true", dest="clear_cache")
-
-    args = parser.parse_args()
-    if args.rm_cache is not None:
-        if not os.path.exists("anime_ids.json"):
-            exit()
-        with open("anime_ids.json") as fp:
-            anime_ids = json.load(fp)
-        for lst in anime_ids.values():
-            if args.rm_cache in lst:
-                del lst[args.rm_cache]
-                print(f"Removed \"{args.rm_cache}\" from cache.")
-                exit()
-        print(f"\"{args.rm_cache}\" not found in cache.")
-        exit()
-    elif args.clear_cache:
-        with open("anime_ids.json", "w") as fp:
-            fp.write("{}")
-        print(f"Cache cleared.")
-        exit()
 
     if ACCOUNT == "":
         exit("Account setting cannot be empty. Check config.py")
-
-
-    def add_trailing_slash(dir):
-        if not dir.endswith("/"):
-            return dir + "/"
-        return dir
-
 
     if not os.path.exists("anime_ids.json"):
         with open("anime_ids.json", "w") as fp:
             fp.write("{}")
 
-    MEDIA_DIR_FILMS_INTERNAL = add_trailing_slash(MEDIA_DIR_FILMS_INTERNAL)
-    MEDIA_DIR_SERIES_INTERNAL = add_trailing_slash(MEDIA_DIR_SERIES_INTERNAL)
-    TORRENT_DIR_INTERNAL = add_trailing_slash(TORRENT_DIR_INTERNAL)
-
-    if not os.path.isdir(MEDIA_DIR_FILMS_INTERNAL):
-        os.mkdir(MEDIA_DIR_FILMS_INTERNAL)
-
-    if not os.path.isdir(MEDIA_DIR_SERIES_INTERNAL):
-        os.mkdir(MEDIA_DIR_SERIES_INTERNAL)
-
     # Lookup IDs of already downloaded stuff
-    prepare_dir(MEDIA_DIR_FILMS_INTERNAL, search)
-    prepare_dir(MEDIA_DIR_SERIES_INTERNAL, search)
+    setup_dir(MEDIA_DIR_FILMS_INTERNAL, search)
+    setup_dir(MEDIA_DIR_SERIES_INTERNAL, search)
 
     s.enter(0, 1, run_once)
     s.run()

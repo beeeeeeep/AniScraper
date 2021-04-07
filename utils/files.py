@@ -2,10 +2,14 @@ import json
 import os
 import time
 from service_classes.search import Search
+import logging
 
 
-def prepare_dir(directory: str, search: Search) -> None:
-    print(f"Preparing directory {directory}")
+def setup_dir(directory: str, search: Search) -> None:
+    logging.info(f"Preparing directory {directory}")
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+        return
     with open("anime_ids.json") as fp:
         anime_ids = json.load(fp)
     if anime_ids.get(directory) is None:
@@ -18,9 +22,24 @@ def prepare_dir(directory: str, search: Search) -> None:
         anime_id = search.fetch(file)
         if anime_id is not None:
             anime_ids[directory][file] = anime_id
-            print(f"Found ID for {file} - {anime_id}")
+            logging.info(f"Found ID for {file} - {anime_id}")
         else:
-            print(f"Failed to find ID for {file}")
+            logging.warning(f"Failed to find ID for {file}")
         time.sleep(2)
     with open("anime_ids.json", "w") as fp:
         json.dump(anime_ids, fp, indent=4)
+
+
+def load_anime_ids(filename: str):
+    with open(filename) as fp:
+        anime_ids = json.load(fp)
+        if anime_ids.get("downloaded") is None:
+            anime_ids["downloaded"] = []
+        if anime_ids.get("blacklist") is None:
+            anime_ids["blacklist"] = []
+    return anime_ids
+
+
+def store_anime_ids(filename, ids):
+    with open(filename, "w") as fp:
+        json.dump(ids, fp)

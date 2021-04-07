@@ -6,9 +6,11 @@ OPENVPN_PROFILE_PATH = ""  # ovpn profile file
 DISABLE_NEW_ANIME = False  # disables downloading of anime newer than 2020, as these sometimes have unreliable batches.
 ACCOUNT = ""  # anime list account
 MIN_SERIES_SIZE = 2  # the minimum accepted size of TV shows in GiB
-INDEXER_KEYWORDS = ["blu-ray", "blu ray", "(bd", "[bd", "bdrip"]  # results containing these in the title are more likely to be chosen
+MIN_MOVIE_SIZE = 1  # min accepted movie file size
+INDEXER_PREFER_BD = True  # prefer BD rips over other release types
 INDEXER_QUALITY = "1080p"  # preferred quality. Not a hard limit.
 INDEXER_GROUPS = ["commie", "erai-raws", "horriblesubs", "subsplease"]  # preferred release groups
+MIN_SEEDERS = 5
 
 INTERVAL = 10 * 60  # interval between ptw list fetches in seconds
 

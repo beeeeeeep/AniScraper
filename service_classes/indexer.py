@@ -86,6 +86,7 @@ class Indexer:
             ranks[entry] = rank
         if not return_ranks:
             return [k for k, v in reversed(sorted(ranks.items(), key=lambda x: x[1]))]
+        # special debug case
         return [(k, v) for k, v in reversed(sorted(ranks.items(), key=lambda x: x[1]))]
 
     def query(self, name: str) -> List[IndexerResult]:

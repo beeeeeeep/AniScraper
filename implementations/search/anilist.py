@@ -2,7 +2,6 @@ from data_scraping.api import APIParser, JSONSelector
 from data_scraping.datasource import APISource
 from service_classes.search import Search
 
-
 query = '''
 query($page: Int = 1 $id: Int $type: MediaType $isAdult: Boolean = false $search: String $format: [MediaFormat] $status: MediaStatus $countryOfOrigin: CountryCode $source: MediaSource $season: MediaSeason $seasonYear: Int $year: String $onList: Boolean $yearLesser: FuzzyDateInt $yearGreater: FuzzyDateInt $episodeLesser: Int $episodeGreater: Int $durationLesser: Int $durationGreater: Int $chapterLesser: Int $chapterGreater: Int $volumeLesser: Int $volumeGreater: Int $licensedBy: [String] $genres: [String] $excludedGenres: [String] $tags: [String] $excludedTags: [String] $minimumTagRank: Int $sort: [MediaSort] = [POPULARITY_DESC, SCORE_DESC]) {
     Page(page: $page, perPage: 20) {
@@ -33,6 +32,10 @@ search = Search(
         url="https://graphql.anilist.co",
         request_type="POST",
         query_formatter=query_formatter,
-        request_parser=APIParser([JSONSelector(["data", "Page", "media", 0, "id"])], postprocess=lambda x: x[0])
+        request_parser=APIParser(
+            [
+                JSONSelector(["data", "Page", "media", 0, "id"]),
+                JSONSelector(["data", "Page", "media", 0, "title", "userPreferred"])
+            ], postprocess=lambda x: x)
     )
 )
