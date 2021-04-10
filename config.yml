@@ -1,0 +1,29 @@
+media:
+  series: "/disk/media/series"  # series are symlinked into this dir
+  films: "/disk/media/films"  # films are symlinked into this dir
+  torrents: "/disk/torrents"  # torrent files are stored here
+
+docker:
+  openvpn_profile_path: ""  # ovpn profile file
+  docker_user: 1000  # user who owns the media dirs. Find using "id" command.
+  docker_group: 1000  # group of user who owns the media dirs. Find using "id" command.
+
+preferences:
+  account: "ivs_eres"  # anime list account
+  disable_new_anime: False # disables downloading of anime newer than 2020, as these sometimes have unreliable batches.
+  min_series_size: 2  # the minimum accepted size of TV shows in GiB
+  min_movie_size: 1  # min accepted movie file size
+  prefer_bluray: True  # prefer BD rips over other release types
+  quality: "1080p"  # preferred quality
+  groups:  # preferred release groups
+    - "commie"
+    - "erai-raws"
+    - "horriblesubs"
+    - "subsplease"
+  min_seeders: 5
+  interval: 600  # interval between ptw list fetch in seconds
+
+  # Select which implementations to use
+  anime_list: "mal"
+  indexer: "nyaa"
+  torrent: "rtorrent_xmlrpc"

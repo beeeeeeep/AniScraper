@@ -1,8 +1,11 @@
 import json
 import os
 import time
+from typing import Dict
+
 from service_classes.search import Search
 import logging
+import yaml
 
 
 def setup_dir(directory: str, search: Search) -> None:
@@ -47,3 +50,8 @@ def load_anime_ids(filename: str):
 def store_anime_ids(filename, ids):
     with open(filename, "w") as fp:
         json.dump(ids, fp)
+
+
+def load_config(path: str) -> Dict:
+    with open(path) as fp:
+        return yaml.safe_load(fp)

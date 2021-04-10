@@ -4,7 +4,7 @@ TORRENT_DIR = "/disk/torrents"  # torrent files are stored here
 OPENVPN_PROFILE_PATH = ""  # ovpn profile file
 
 DISABLE_NEW_ANIME = False  # disables downloading of anime newer than 2020, as these sometimes have unreliable batches.
-ACCOUNT = ""  # anime list account
+ACCOUNT = "ivs_eres"  # anime list account
 MIN_SERIES_SIZE = 2  # the minimum accepted size of TV shows in GiB
 MIN_MOVIE_SIZE = 1  # min accepted movie file size
 INDEXER_PREFER_BD = True  # prefer BD rips over other release types

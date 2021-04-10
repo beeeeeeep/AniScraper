@@ -1,27 +1,20 @@
 import importlib
-import json
 import logging
 import os
 import sched
 import time
 from argparse import ArgumentParser
 from datetime import datetime
+from typing import Dict
 
 import requests
 from torrentool.torrent import Torrent
 
-from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERIES_INTERNAL, MEDIA_DIR_FILMS_INTERNAL, \
-    TORRENT, TORRENT_DIR, TORRENT_DIR_INTERNAL, DISABLE_NEW_ANIME, ACCOUNT, MIN_SERIES_SIZE, INDEXER_PREFER_BD, \
-    INDEXER_QUALITY, MIN_MOVIE_SIZE, MIN_SEEDERS
 from implementations.search.anilist import search
 from service_classes.animelist import AnimeList
 from service_classes.indexer import Indexer
 from service_classes.torrent_client import TorrentClient
-from utils.files import setup_dir, load_anime_ids, store_anime_ids
-
-ptw: AnimeList = importlib.import_module(f"implementations.anime_list.{ANIME_LIST}").ptw
-indexer: Indexer = importlib.import_module(f"implementations.indexer.{INDEXER}").indexer
-torrent: TorrentClient = importlib.import_module(f"implementations.torrent.{TORRENT}").torrent
+from utils.files import setup_dir, load_anime_ids, store_anime_ids, load_config
 
 s = sched.scheduler(time.time, time.sleep)
 
@@ -33,7 +26,7 @@ def get_torrent_name(torrent_url):
     return Torrent.from_string(r.content).name
 
 
-def run_check(ptw, indexer, torrent_client: TorrentClient):
+def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, preferences: Dict):
     logging.info("Running scrape")
 
     # Get IDs in storage
@@ -41,7 +34,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient):
 
     # Get plan to watch list
     try:
-        ptw_anime = ptw.fetch(ACCOUNT)
+        ptw_anime = ptw.fetch(preferences["account"])
     except ConnectionError:
         logging.warning("Failed to connect to anime list service")
         return
@@ -56,7 +49,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient):
             logging.warning(f"No AniList results for {anime_title}. Ignoring.")
             continue
 
-        if anime_year >= datetime.now().year - 1 and DISABLE_NEW_ANIME:
+        if anime_year >= datetime.now().year - 1 and preferences["disable_new_anime"]:
             logging.info(f"{anime_title} is newer than 2020. Ignoring.")
             continue
 
@@ -69,12 +62,12 @@ def run_check(ptw, indexer, torrent_client: TorrentClient):
         top_ranks = Indexer.rank(
             indexer_query,
             title=anilist_title,
-            pref_groups=INDEXER_GROUPS,
-            pref_quality=INDEXER_QUALITY,
+            pref_groups=preferences["groups"],
+            pref_quality=preferences["quality"],
             season=1,
-            min_gib=MIN_MOVIE_SIZE if anime.anime_type == "Movie" else MIN_SERIES_SIZE,
-            min_seeders=MIN_SEEDERS,
-            prefer_bluray=INDEXER_PREFER_BD,
+            min_gib=preferences["min_movie_size"] if anime.anime_type == "Movie" else preferences["min_series_size"],
+            min_seeders=preferences["min_seeders"],
+            prefer_bluray=preferences["prefer_bluray"],
             seeders_importance=0.5  # TODO: find best
         )
 
@@ -92,18 +85,19 @@ def run_check(ptw, indexer, torrent_client: TorrentClient):
         torrent_file_name = get_torrent_name(torrent_url)
 
         # Add torrent using url
-        success = torrent_client.execute("add", torrent_url, TORRENT_DIR_INTERNAL)
+        success = torrent_client.execute("add", torrent_url, media_config["torrents"])
 
         if not success:
             raise RuntimeError("Torrent client error")
         if anime.type == "Movie":
-            media_dir = MEDIA_DIR_FILMS_INTERNAL
+            media_dir = media_config["films"]
         else:
-            media_dir = MEDIA_DIR_SERIES_INTERNAL
+            media_dir = media_config["series"]
         if not media_dir.endswith("/"):
             media_dir += "/"
         os.mkdir(media_dir + anime_title)
-        os.symlink(TORRENT_DIR + torrent_file_name, media_dir + anime_title + "/Season 1" if anime.type == "TV" else "")
+        os.symlink(media_config["torrents"] + torrent_file_name,
+                   media_dir + anime_title + "/Season 1" if anime.type == "TV" else "")
         anime_ids["downloaded"].append(anilist_id)
         logging.info(f"Added ({anime.type}) {anilist_title}")
 
@@ -113,9 +107,32 @@ def run_check(ptw, indexer, torrent_client: TorrentClient):
     logging.info("Scrape finished")
 
 
-def run_once():
-    run_check(ptw, indexer, torrent)
-    s.enter(INTERVAL, 1, run_once)
+def run_once(ptw, indexer, torrent, media_config, preferences):
+    run_check(ptw, indexer, torrent, media_config, preferences)
+    s.enter(preferences["interval"], 1, run_once)
+
+
+def start():
+    config = load_config("./config.yml")
+    print(config)
+    return
+    media_config = config["media"]
+    docker_config = config["docker"]
+    preferences = config["preferences"]
+
+    ptw: AnimeList = importlib.import_module(f"implementations.anime_list.{preferences['anime_list']}").ptw
+    indexer: Indexer = importlib.import_module(f"implementations.indexer.{preferences['indexer']}").indexer
+    torrent: TorrentClient = importlib.import_module(f"implementations.torrent.{preferences['torrent']}").torrent
+
+    if preferences['account'] == "":
+        exit("Account setting cannot be empty. Check config.py")
+
+    # Lookup IDs of already downloaded stuff
+    setup_dir(media_config["films"], search)
+    setup_dir(media_config["series"], search)
+
+    s.enter(0, 1, run_once, argument=(ptw, indexer, torrent, media_config, preferences))
+    s.run()
 
 
 if __name__ == "__main__":
@@ -123,13 +140,4 @@ if __name__ == "__main__":
                         datefmt="%d/%m/%Y %H:%M:%S")
 
     parser = ArgumentParser(description="An anime torrent automation tool.")
-
-    if ACCOUNT == "":
-        exit("Account setting cannot be empty. Check config.py")
-
-    # Lookup IDs of already downloaded stuff
-    setup_dir(MEDIA_DIR_FILMS_INTERNAL, search)
-    setup_dir(MEDIA_DIR_SERIES_INTERNAL, search)
-
-    s.enter(0, 1, run_once)
-    s.run()
+    start()
