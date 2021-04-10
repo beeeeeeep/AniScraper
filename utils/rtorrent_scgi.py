@@ -26,7 +26,7 @@ class RTorrentSCGI:
         params_xml = "".join(list(map(lambda x: f"<param>{RTorrentSCGI.__value(x)}</param>", params)))
         return f"<params>{params_xml}</params>"
 
-    def request(self, request: str, *params: List[str]):
+    def request(self, request: str, *params: str):
         request_xml = f'<?xml version="1.0"?><methodCall><methodName>{request}</methodName>'\
             f'{self.__params(params)}</methodCall>'
         headers = {

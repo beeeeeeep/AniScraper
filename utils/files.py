@@ -31,6 +31,10 @@ def setup_dir(directory: str, search: Search) -> None:
 
 
 def load_anime_ids(filename: str):
+    if not os.path.exists("anime_ids.json"):
+        with open("anime_ids.json", "w") as fp:
+            fp.write("{}")
+        return {"downloaded": [], "blacklist": []}
     with open(filename) as fp:
         anime_ids = json.load(fp)
         if anime_ids.get("downloaded") is None:

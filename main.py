@@ -16,25 +16,12 @@ from config import ANIME_LIST, INDEXER, INDEXER_GROUPS, INTERVAL, MEDIA_DIR_SERI
 from implementations.search.anilist import search
 from service_classes.animelist import AnimeList
 from service_classes.indexer import Indexer
-from service_classes.torrent_client import ShellProgram
+from service_classes.torrent_client import TorrentClient
 from utils.files import setup_dir, load_anime_ids, store_anime_ids
 
-anime_list_imp = importlib.import_module(f"implementations.anime_list.{ANIME_LIST}")
-indexer_imp = importlib.import_module(f"implementations.indexer.{INDEXER}")
-torrent_imp = importlib.import_module(f"implementations.torrent.{TORRENT}")
-
-if not hasattr(anime_list_imp, "ptw") or not isinstance(anime_list_imp.ptw, AnimeList):
-    raise RuntimeError("anime_list must define a variable \"ptw\" of type AnimeList")
-
-if not hasattr(indexer_imp, "indexer") or not isinstance(indexer_imp.indexer, Indexer):
-    raise RuntimeError("indexer must define a variable \"indexer\" of type Indexer")
-
-if not hasattr(torrent_imp, "torrent"):
-    raise RuntimeError("torrent must define a variable \"torrent\" of type TorrentClient")
-
-ptw: AnimeList = anime_list_imp.ptw
-indexer: Indexer = indexer_imp.indexer
-torrent: ShellProgram = torrent_imp.torrent
+ptw: AnimeList = importlib.import_module(f"implementations.anime_list.{ANIME_LIST}").ptw
+indexer: Indexer = importlib.import_module(f"implementations.indexer.{INDEXER}").indexer
+torrent: TorrentClient = importlib.import_module(f"implementations.torrent.{TORRENT}").torrent
 
 s = sched.scheduler(time.time, time.sleep)
 
@@ -46,7 +33,7 @@ def get_torrent_name(torrent_url):
     return Torrent.from_string(r.content).name
 
 
-def run_check():
+def run_check(ptw, indexer, torrent_client: TorrentClient):
     logging.info("Running scrape")
 
     # Get IDs in storage
@@ -87,6 +74,7 @@ def run_check():
             season=1,
             min_gib=MIN_MOVIE_SIZE if anime.anime_type == "Movie" else MIN_SERIES_SIZE,
             min_seeders=MIN_SEEDERS,
+            prefer_bluray=INDEXER_PREFER_BD,
             seeders_importance=0.5  # TODO: find best
         )
 
@@ -104,7 +92,7 @@ def run_check():
         torrent_file_name = get_torrent_name(torrent_url)
 
         # Add torrent using url
-        success = torrent.execute("add", torrent_url, TORRENT_DIR_INTERNAL)
+        success = torrent_client.execute("add", torrent_url, TORRENT_DIR_INTERNAL)
 
         if not success:
             raise RuntimeError("Torrent client error")
@@ -126,7 +114,7 @@ def run_check():
 
 
 def run_once():
-    run_check()
+    run_check(ptw, indexer, torrent)
     s.enter(INTERVAL, 1, run_once)
 
 
@@ -138,10 +126,6 @@ if __name__ == "__main__":
 
     if ACCOUNT == "":
         exit("Account setting cannot be empty. Check config.py")
-
-    if not os.path.exists("anime_ids.json"):
-        with open("anime_ids.json", "w") as fp:
-            fp.write("{}")
 
     # Lookup IDs of already downloaded stuff
     setup_dir(MEDIA_DIR_FILMS_INTERNAL, search)
