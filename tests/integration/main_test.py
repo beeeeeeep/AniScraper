@@ -1,23 +1,18 @@
 import unittest
 from typing import Dict
 from unittest.mock import patch, mock_open
-from main import start
+
 from implementations.anime_list.mal import ptw
 from implementations.indexer.nyaa import indexer
-import yaml
+from main import run_check
 
 
 def load_test_config() -> Dict:
     return {
         'media': {
-            'series': '/disk/media/series',
-            'films': '/disk/media/films',
-            'torrents': '/disk/torrents'
-        },
-        'docker': {
-            'openvpn_profile_path': '',
-            'docker_user': 1000,
-            'docker_group': 1000
+            'series': '/series/',
+            'films': '/films/',
+            'torrents': '/torrents/'
         },
         'preferences': {
             'account': 'aniscraper_test',
@@ -40,18 +35,27 @@ class MainTest(unittest.TestCase):
     m = mock_open(read_data="testing")
 
     @patch("utils.files.open", m)
-    @patch("main.load_config")
-    @patch("main.os.path")
+    @patch("main.store_anime_ids")
+    @patch("main.os.symlink")
+    @patch("main.os.mkdir")
+    @patch("main.load_anime_ids")
     @patch("service_classes.torrent_client.TorrentClient")
-    def test_main(self, mock_torrent, mock_os_path, mock_load_config):
-        start()
-        # self.m.assert_called_once_with("./config.yml")
-        mock_load_config.assert_called_once_with("./config.yml")
-        mock_load_config.return_value = {"no": 1}
-        # mock_os_path.isdir.assert_called_once_with()
-        # mock_os_path.exists.assert_called_once_with("anime_ids.json")
-        # mock_os_path.exists.return_value = False
-        # self.m.assert_called_once_with("anime_list.json", "w")
-        # handle = self.m()
-        # handle.write.assert_called_once_with("{}")
-        # mock_torrent.execute.assert_called_once_with("add", "lmao", "yeet")
+    def test_main(self, mock_torrent, mock_load_anime_ids, mock_mkdir, mock_symlink, mock_store_anime_ids):
+        config = load_test_config()
+        mock_load_anime_ids.return_value = {
+            "downloaded": [],
+            "blacklist": []
+        }
+        run_check(ptw, indexer, mock_torrent, config["media"], config["preferences"])
+        mock_load_anime_ids.assert_called_once_with("anime_ids.json")
+        mock_torrent.execute.assert_called_once_with("add", "https://nyaa.si/download/1365504.torrent",
+                                                     config["media"]["torrents"])
+        mock_mkdir.assert_called_once_with(config["media"]["series"] + "Wonder Egg Priority")
+        mock_symlink.assert_called_once_with(
+            config["media"]["torrents"] + "[Nyanpasu] Wonder Egg Priority 1-12 Batch [1080p][HEVC]",
+            config["media"]["series"] + "Wonder Egg Priority/Season 1"
+        )
+        mock_store_anime_ids.assert_called_once_with("./anime_ids.json", {
+            "downloaded": [124845],
+            "blacklist": []
+        })

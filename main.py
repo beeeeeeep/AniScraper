@@ -5,7 +5,7 @@ import sched
 import time
 from argparse import ArgumentParser
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Callable
 
 import requests
 from torrentool.torrent import Torrent
@@ -65,7 +65,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
             pref_groups=preferences["groups"],
             pref_quality=preferences["quality"],
             season=1,
-            min_gib=preferences["min_movie_size"] if anime.anime_type == "Movie" else preferences["min_series_size"],
+            min_gib=preferences["min_movie_size"] if anime.type == "Movie" else preferences["min_series_size"],
             min_seeders=preferences["min_seeders"],
             prefer_bluray=preferences["prefer_bluray"],
             seeders_importance=0.5  # TODO: find best
@@ -93,8 +93,6 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
             media_dir = media_config["films"]
         else:
             media_dir = media_config["series"]
-        if not media_dir.endswith("/"):
-            media_dir += "/"
         os.mkdir(media_dir + anime_title)
         os.symlink(media_config["torrents"] + torrent_file_name,
                    media_dir + anime_title + "/Season 1" if anime.type == "TV" else "")
@@ -107,15 +105,8 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
     logging.info("Scrape finished")
 
 
-def run_once(ptw, indexer, torrent, media_config, preferences):
-    run_check(ptw, indexer, torrent, media_config, preferences)
-    s.enter(preferences["interval"], 1, run_once)
-
-
 def start():
     config = load_config("./config.yml")
-    print(config)
-    return
     media_config = config["media"]
     docker_config = config["docker"]
     preferences = config["preferences"]
@@ -131,8 +122,13 @@ def start():
     setup_dir(media_config["films"], search)
     setup_dir(media_config["series"], search)
 
-    s.enter(0, 1, run_once, argument=(ptw, indexer, torrent, media_config, preferences))
-    s.run()
+    schedule(run_check, preferences["interval"], ptw, indexer, torrent, media_config, preferences)
+
+
+def schedule(func: Callable, delay: int, *args):
+    while True:
+        func(*args)
+        time.sleep(delay)
 
 
 if __name__ == "__main__":

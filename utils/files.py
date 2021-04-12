@@ -54,4 +54,8 @@ def store_anime_ids(filename, ids):
 
 def load_config(path: str) -> Dict:
     with open(path) as fp:
-        return yaml.safe_load(fp)
+        data = yaml.safe_load(fp)
+        for key in data["media"].keys():
+            if not data["media"][key].endswith("/"):
+                data["media"][key] += "/"
+        return data

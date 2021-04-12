@@ -24,7 +24,7 @@ class SubelementSelector:
 
 class Scraper:
 
-    def __init__(self, parser: str, root: Tuple[str, List[str]], subelem_selectors: List[SubelementSelector] = [], map: Callable[[str], str] = None, postprocess: Callable[[List], str] = None):
+    def __init__(self, parser: str, root: Tuple[str, List[str]], subelem_selectors: List[SubelementSelector] = [], map: Callable[[str], str] = None, postprocess: Callable[[List], list] = None):
         self.parser = parser
         self.root = root
         self.subelem_selectors = subelem_selectors
