@@ -36,7 +36,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
     try:
         ptw_anime = ptw.fetch(preferences["account"])
     except ConnectionError:
-        logging.warning("Failed to connect to anime list service")
+        logging.error("Failed to connect to anime list service")
         return
 
     for anime in ptw_anime:
@@ -83,6 +83,8 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
 
         # GET .torrent file, parse and get torrent file name
         torrent_file_name = get_torrent_name(torrent_url)
+
+        logging.debug(f"Torrent file: {torrent_file_name}")
 
         # Add torrent using url
         success = torrent_client.execute("add", torrent_url, media_config["torrents"])

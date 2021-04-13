@@ -37,6 +37,7 @@ class Indexer:
     def rank(data: List[IndexerResult], title: str, pref_groups: List[str], pref_quality: str, season: int,
              min_gib: int = None, prefer_bluray: bool = True, min_seeders: int = 0, seeders_importance: float = 1,
              return_ranks: bool = False) -> List[IndexerResult]:
+        # TODO: fix eng titles
         EPISODE_NUMBER_EXCEPTIONS = ["539"]
         if season < 1:
             raise ValueError("Season cannot be less than one")
