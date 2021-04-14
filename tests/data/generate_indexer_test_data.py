@@ -2,6 +2,7 @@ import re
 
 from implementations.indexer.nyaa import indexer
 from service_classes.indexer import Indexer
+from implementations.search.anilist import search as s
 
 
 def gen_indexer_test_data(search: str, indexer: Indexer) -> str:
@@ -13,15 +14,16 @@ def gen_indexer_test_data(search: str, indexer: Indexer) -> str:
             continue
         unique_results.append(result)
     indexer_results = ",\n        ".join([f'IndexerResult("{x.title}", "", {x.seeders}, "{x.size}"): None' for x in unique_results])
+    q = s.fetch(search)
     return f"""{{
     "enable": True,
     "data": {{
         {indexer_results}
     }},
-    "rank_settings": {{"title": "{results[0].title}", "pref_groups": ["HorribleSubs", "Erai-raws"],
+    "rank_settings": {{"titles": ["{q[1]}", "{q[2]}"], "pref_groups": ["HorribleSubs", "Erai-raws"],
                       "pref_quality": "1080p", "season": 1, "min_gib": 1, "min_seeders": 5, "seeders_importance": 1}}
 }},
 """
 
 
-print(gen_indexer_test_data("mononoke", indexer))
+print(gen_indexer_test_data("kaguya sama", indexer))

@@ -44,7 +44,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
         anime_year = anime.year
 
         # Get AniList ID
-        anilist_id, anilist_title = search.fetch(anime_title)
+        anilist_id, a_title_romaji, a_title_english = search.fetch(anime_title)
         if anilist_id is None:
             logging.warning(f"No AniList results for {anime_title}. Ignoring.")
             continue
@@ -61,7 +61,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
             continue
         top_ranks = Indexer.rank(
             indexer_query,
-            title=anilist_title,
+            titles=[a_title_romaji, a_title_english],
             pref_groups=preferences["groups"],
             pref_quality=preferences["quality"],
             season=1,
@@ -99,7 +99,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
         os.symlink(media_config["torrents"] + torrent_file_name,
                    media_dir + anime_title + "/Season 1" if anime.type == "TV" else "")
         anime_ids["downloaded"].append(anilist_id)
-        logging.info(f"Added ({anime.type}) {anilist_title}")
+        logging.info(f"Added ({anime.type}) {a_title_romaji}")
 
         time.sleep(1)  # comply with anilist rate limit
 

@@ -31,10 +31,10 @@ class Indexer:
     @staticmethod
     def __string_closeness(a: str, b: str) -> float:
         # TODO: determine best similarity metric
-        return textdistance.hamming.normalized_similarity(a, b)
+        return textdistance.levenshtein.normalized_similarity(a, b)
 
     @staticmethod
-    def rank(data: List[IndexerResult], title: str, pref_groups: List[str], pref_quality: str, season: int,
+    def rank(data: List[IndexerResult], titles: List[str], pref_groups: List[str], pref_quality: str, season: int,
              min_gib: int = None, prefer_bluray: bool = True, min_seeders: int = 0, seeders_importance: float = 1,
              return_ranks: bool = False) -> List[IndexerResult]:
         # TODO: fix eng titles
@@ -79,7 +79,7 @@ class Indexer:
                     raise Exception("Hopefully not possible")
                 if any(x in source.lower() for x in ["bd", "blu"]):
                     rank += 2
-            title_similarity = Indexer.__string_closeness(title.lower(), parse["anime_title"].lower())
+            title_similarity = max(Indexer.__string_closeness(x.lower(), parse["anime_title"].lower()) for x in titles)
             if title_similarity < 0.5:
                 continue
             rank *= title_similarity

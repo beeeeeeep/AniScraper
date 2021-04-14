@@ -10,7 +10,8 @@ query($page: Int = 1 $id: Int $type: MediaType $isAdult: Boolean = false $search
         }
         media(id: $id type: $type season: $season format_in: $format status: $status countryOfOrigin: $countryOfOrigin source: $source search: $search onList: $onList seasonYear: $seasonYear startDate_like: $year startDate_lesser: $yearLesser startDate_greater: $yearGreater episodes_lesser: $episodeLesser episodes_greater: $episodeGreater duration_lesser: $durationLesser duration_greater: $durationGreater chapters_lesser: $chapterLesser chapters_greater: $chapterGreater volumes_lesser: $volumeLesser volumes_greater: $volumeGreater licensedBy_in: $licensedBy genre_in: $genres genre_not_in: $excludedGenres tag_in: $tags tag_not_in: $excludedTags minimumTagRank: $minimumTagRank sort: $sort isAdult: $isAdult) {
             id title {
-                userPreferred
+                romaji
+                english
             }
         }
     }
@@ -35,7 +36,8 @@ search = Search(
         request_parser=APIParser(
             [
                 JSONSelector(["data", "Page", "media", 0, "id"]),
-                JSONSelector(["data", "Page", "media", 0, "title", "userPreferred"])
+                JSONSelector(["data", "Page", "media", 0, "title", "romaji"]),
+                JSONSelector(["data", "Page", "media", 0, "title", "english"])
             ], postprocess=lambda x: x)
     )
 )
