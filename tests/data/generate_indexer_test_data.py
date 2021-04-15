@@ -26,4 +26,4 @@ def gen_indexer_test_data(search: str, indexer: Indexer) -> str:
 """
 
 
-print(gen_indexer_test_data("kaguya sama", indexer))
+print(gen_indexer_test_data("demon slayer", indexer))

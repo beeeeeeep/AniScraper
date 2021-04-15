@@ -1,3 +1,5 @@
+import itertools
+import logging
 import re
 import textdistance
 from typing import List
@@ -5,6 +7,7 @@ from typing import List
 import anitopy
 
 from data_scraping.datasource import DataSource
+from implementations.search.anilist import search
 
 
 class IndexerResult:
@@ -34,7 +37,7 @@ class Indexer:
         return textdistance.levenshtein.normalized_similarity(a, b)
 
     @staticmethod
-    def rank(data: List[IndexerResult], titles: List[str], pref_groups: List[str], pref_quality: str, season: int,
+    def rank(data: List[IndexerResult], anilist_id: int, titles: List[str], pref_groups: List[str], pref_quality: str, season: int,
              min_gib: int = None, prefer_bluray: bool = True, min_seeders: int = 0, seeders_importance: float = 1,
              return_ranks: bool = False) -> List[IndexerResult]:
         # TODO: fix eng titles
@@ -43,9 +46,13 @@ class Indexer:
             raise ValueError("Season cannot be less than one")
         ranks = {}
         anitopy_parse = [(x, anitopy.parse(x.title)) for x in data]
+        max_seeders = max(x.seeders for x in data)
+        mismatched_anime_ids = {}
         for entry, parse in anitopy_parse:
             if entry.seeders < min_seeders:
                 continue
+            if re.search(r"\([0-9]{4}.*\)", parse["anime_title"]) is not None:
+                parse["anime_title"] = re.sub(r"\([0-9]{4}.*\)", "", parse["anime_title"])
             if any(f"season {x}" in entry.title.lower() for x in range(1, 100) if x != season):
                 # missed case by anitopy season parsing
                 continue
@@ -82,8 +89,19 @@ class Indexer:
             title_similarity = max(Indexer.__string_closeness(x.lower(), parse["anime_title"].lower()) for x in titles)
             if title_similarity < 0.5:
                 continue
-            rank *= title_similarity
-            rank += entry.seeders * seeders_importance
+            if title_similarity < 0.8:
+                a_id = None
+                for k, v in mismatched_anime_ids.items():
+                    if Indexer.__string_closeness(k, parse["anime_title"]) > 0.9:
+                        a_id = v
+                        break
+                if a_id is None:
+                    logging.debug(f"Unsure about {parse['anime_title']}, doing anilist ID search")
+                    a_id = search.fetch(parse["anime_title"])[0]
+                    mismatched_anime_ids[parse["anime_title"]] = a_id
+                if a_id != anilist_id:
+                    continue
+            rank *= 1 + (entry.seeders / max_seeders) * seeders_importance
             ranks[entry] = rank
         if not return_ranks:
             return [k for k, v in reversed(sorted(ranks.items(), key=lambda x: x[1]))]

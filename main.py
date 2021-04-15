@@ -61,6 +61,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
             continue
         top_ranks = Indexer.rank(
             indexer_query,
+            anilist_id=anilist_id,
             titles=[a_title_romaji, a_title_english],
             pref_groups=preferences["groups"],
             pref_quality=preferences["quality"],
@@ -68,7 +69,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
             min_gib=preferences["min_movie_size"] if anime.type == "Movie" else preferences["min_series_size"],
             min_seeders=preferences["min_seeders"],
             prefer_bluray=preferences["prefer_bluray"],
-            seeders_importance=0.5  # TODO: find best
+            seeders_importance=0.1  # TODO: find best
         )
 
         if len(top_ranks) == 0:
