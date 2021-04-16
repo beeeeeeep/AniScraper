@@ -5,11 +5,10 @@ from data_scraping.datasource import DataSource
 
 class AnimeListResult:
 
-    def __init__(self, title: str, anime_id: str, anime_type: str, year: int):
+    def __init__(self, title: str, anime_id: str, anime_type: str):
         self.title = title
         self.anime_id = str(anime_id)
         self.type = anime_type
-        self.year = int(year)
 
 
 class AnimeList:

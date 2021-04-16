@@ -41,15 +41,14 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
 
     for anime in ptw_anime:
         anime_title = anime.title
-        anime_year = anime.year
 
         # Get AniList ID
-        anilist_id, a_title_romaji, a_title_english = search.fetch(anime_title)
+        anilist_id, a_year, a_title_romaji, a_title_english = search.fetch(anime_title)
         if anilist_id is None:
             logging.warning(f"No AniList results for {anime_title}. Ignoring.")
             continue
 
-        if anime_year >= datetime.now().year - 1 and preferences["disable_new_anime"]:
+        if a_year >= datetime.now().year - 1 and preferences["disable_new_anime"]:
             logging.info(f"{anime_title} is newer than 2020. Ignoring.")
             continue
 
@@ -75,7 +74,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
         if len(top_ranks) == 0:
             error_msg = f"INFO: Could not find a suitable batch for {anime_title}. "
             recent = datetime.now().year - 3
-            if anime_year > recent:
+            if a_year > recent:
                 error_msg += f"This anime aired later than {recent}, so it may not have batches yet. Try adding it on Sonarr."
             logging.info(error_msg)
             continue

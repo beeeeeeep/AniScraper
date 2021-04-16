@@ -5,13 +5,19 @@ from implementations.anime_list.mal import ptw
 
 class AnimeListTest(unittest.TestCase):
     def test_myanimelist(self):
-        mal = ptw.fetch("ivs_eres")
-        self.assertGreater(len(mal), 0)
-        first = mal[0]
-        self.assertIsInstance(first.anime_id, str)
-        self.assertIsInstance(first.title, str)
-        self.assertIsInstance(first.type, str)
-        self.assertIsInstance(first.year, int)
+        mal = ptw.fetch("aniscraper_test")
+        self.assertEqual(len(mal), 3)
+        animes = {
+            "37999": ("Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen", "TV"),
+            "38000": ("Kimetsu no Yaiba", "TV"),
+            "43299": ("Wonder Egg Priority", "TV")
+        }
+        found_ids = [x.anime_id for x in mal]
+        for k, v in animes.items():
+            self.assertIn(k, found_ids)
+            found = [x for x in mal if x.anime_id == k][0]
+            self.assertEqual(found.title, v[0])
+            self.assertEqual(found.type, v[1], v[0])
 
     def test_nonexistant_account(self):
         try:

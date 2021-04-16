@@ -13,9 +13,8 @@ def mal_json_parser(raw: str) -> list:
         (
             re.sub(r"\(TV\)|\(Movie\)|\(OVA\)", "", x["anime_title"], flags=re.IGNORECASE),
             x["anime_id"],
-            x["anime_media_type_string"],
-            datetime.now().year if x["anime_season"] is None else int(x["anime_season"]["year"]))
-        for x in data]
+            x["anime_media_type_string"]
+        ) for x in data]
 
 ptw = AnimeList(
     WebScrapeSource(

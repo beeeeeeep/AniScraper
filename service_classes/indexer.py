@@ -37,10 +37,10 @@ class Indexer:
         return textdistance.levenshtein.normalized_similarity(a, b)
 
     @staticmethod
-    def rank(data: List[IndexerResult], anilist_id: int, titles: List[str], pref_groups: List[str], pref_quality: str, season: int,
-             min_gib: int = None, prefer_bluray: bool = True, min_seeders: int = 0, seeders_importance: float = 1,
-             return_ranks: bool = False) -> List[IndexerResult]:
-        # TODO: fix eng titles
+    def rank(data: List[IndexerResult], anilist_id: int, titles: List[str], pref_groups: List[str], pref_quality: str,
+             season: int, min_gib: int = None, prefer_bluray: bool = True, min_seeders: int = 0,
+             seeders_importance: float = 1, return_ranks: bool = False) -> List[IndexerResult]:
+        # TODO: make nicer
         EPISODE_NUMBER_EXCEPTIONS = ["539"]
         if season < 1:
             raise ValueError("Season cannot be less than one")
@@ -53,6 +53,8 @@ class Indexer:
                 continue
             if re.search(r"\([0-9]{4}.*\)", parse["anime_title"]) is not None:
                 parse["anime_title"] = re.sub(r"\([0-9]{4}.*\)", "", parse["anime_title"])
+            if re.search(rf"S0*{season}", parse["anime_title"]) is not None:
+                parse["anime_title"] = re.sub(rf"S0*{season}", "", parse["anime_title"])
             if any(f"season {x}" in entry.title.lower() for x in range(1, 100) if x != season):
                 # missed case by anitopy season parsing
                 continue
@@ -60,9 +62,9 @@ class Indexer:
             if size < min_gib:
                 continue
             if parse.get("anime_season") is not None:
-                if isinstance(parse["anime_season"], str) and parse["anime_season"] != str(season):
+                if isinstance(parse["anime_season"], str) and int(parse["anime_season"]) != season:
                     continue
-                if isinstance(parse["anime_season"], list) and str(season) not in parse["anime_season"]:
+                if isinstance(parse["anime_season"], list) and season not in [int(x) for x in parse["anime_season"]]:
                     continue
             if isinstance(parse.get("episode_number", None), str) and parse[
                 "episode_number"] not in EPISODE_NUMBER_EXCEPTIONS:
@@ -85,17 +87,17 @@ class Indexer:
                 else:
                     raise Exception("Hopefully not possible")
                 if any(x in source.lower() for x in ["bd", "blu"]):
-                    rank += 2
+                    rank += 1
             title_similarity = max(Indexer.__string_closeness(x.lower(), parse["anime_title"].lower()) for x in titles)
             if title_similarity < 0.5:
                 continue
             if title_similarity < 0.8:
-                a_id = None
+                a_id = -1
                 for k, v in mismatched_anime_ids.items():
-                    if Indexer.__string_closeness(k, parse["anime_title"]) > 0.9:
+                    if Indexer.__string_closeness(k, parse["anime_title"]) > 0.8:
                         a_id = v
                         break
-                if a_id is None:
+                if a_id == -1:
                     logging.debug(f"Unsure about {parse['anime_title']}, doing anilist ID search")
                     a_id = search.fetch(parse["anime_title"])[0]
                     mismatched_anime_ids[parse["anime_title"]] = a_id

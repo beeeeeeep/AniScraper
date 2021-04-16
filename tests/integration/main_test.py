@@ -34,9 +34,24 @@ def load_test_config() -> Dict:
 
 class MainTest(unittest.TestCase):
     CURRENT_ANIME = {
-        124845: ("Wonder Egg Priority", "https://nyaa.si/download/1365504.torrent", "[Nyanpasu] Wonder Egg Priority 1-12 Batch [1080p][HEVC]"),
-        112641: ("Kaguya-sama wa Kokurasetai?: Tensai-tachi no Renai Zunousen", "https://nyaa.si/download/1355132.torrent", "[EMBER] Kaguya-sama: Love is War (2019-2020) (Season 1+2) [BDRip] [1080p Dual Audio HEVC 10 bits] (Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen)"),
-        101922: ("Kimetsu no Yaiba", "https://nyaa.si/download/1311485.torrent", "[CBM] Demon Slayer: Kimetsu no Yaiba 1-26 Complete (Dual Audio) [BDRip 1080p x265 10bit]")
+        124845: (
+            "Wonder Egg Priority",
+            "https://nyaa.si/download/1365504.torrent",
+            "[Nyanpasu] Wonder Egg Priority 1-12 Batch [1080p][HEVC]",
+            "[Nyanpasu] Wonder Egg Priority 1-12 Batch [1080p][HEVC]"
+        ),
+        112641: (
+            "Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen",
+            "https://nyaa.si/download/1355132.torrent",
+            "[EMBER] Kaguya-sama: Love is War (2019-2020) (Season 1+2) [BDRip] [1080p Dual Audio HEVC 10 bits] (Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen)",
+            "Kaguya-sama Love is War S01-S02 1080p Dual Audio BDRip 10 bits DD x265-EMBER"
+        ),
+        101922: (
+            "Kimetsu no Yaiba",
+            "https://nyaa.si/download/1311485.torrent",
+            "[CBM] Demon Slayer: Kimetsu no Yaiba 1-26 Complete (Dual Audio) [BDRip 1080p x265 10bit]",
+            "[CBM] Demon Slayer - Kimetsu no Yaiba 1-26 Complete (Dual Audio) [BDRip 1080p x265 10bit]"
+        )
     }
     m = mock_open(read_data="testing")
 
@@ -61,7 +76,6 @@ class MainTest(unittest.TestCase):
         mock_torrent.execute.assert_has_calls(torrent_calls, any_order=True)
         mkdir_calls = [call(config["media"]["series"] + x[0]) for x in self.CURRENT_ANIME.values()]
         mock_mkdir.assert_has_calls(mkdir_calls, any_order=True)
-        symlink_calls = [call(config["media"]["torrents"] + x[2], config["media"]["series"] + x[0] + "/Season 1") for x in self.CURRENT_ANIME.values()]
+        symlink_calls = [call(config["media"]["torrents"] + x[3], config["media"]["series"] + x[0] + "/Season 1") for x in self.CURRENT_ANIME.values()]
         mock_symlink.assert_has_calls(symlink_calls, any_order=True)
         self.assertEqual(len(mock_store_anime_ids.mock_calls), 1)
-
