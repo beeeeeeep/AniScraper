@@ -34,11 +34,11 @@ def load_test_config() -> Dict:
 
 class MainTest(unittest.TestCase):
     CURRENT_ANIME = {
-        124845: (
-            "Wonder Egg Priority",
-            "https://nyaa.si/download/1365504.torrent",
-            "[Nyanpasu] Wonder Egg Priority 1-12 Batch [1080p][HEVC]",
-            "[Nyanpasu] Wonder Egg Priority 1-12 Batch [1080p][HEVC]"
+        17549: (
+            "Non Non Biyori",
+            "https://nyaa.si/download/1052306.torrent",
+            "[Tsundere] Non Non Biyori [BDRip h264 1920x1080 10bit FLAC]",  # torrent title
+            "[Tsundere] Non Non Biyori [BDRip h264 1920x1080 10bit FLAC]"  # torrent filename
         ),
         112641: (
             "Kaguya-sama wa Kokurasetai: Tensai-tachi no Renai Zunousen",

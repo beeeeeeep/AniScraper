@@ -42,6 +42,7 @@ class Indexer:
              seeders_importance: float = 1, return_ranks: bool = False) -> List[IndexerResult]:
         # TODO: make nicer
         EPISODE_NUMBER_EXCEPTIONS = ["539"]
+        BATCH_KEYWORDS = ["batch", "complete", "season", rf"S0*{season}", r"1 ?-|~ ?[1-3][0-9]"]
         if season < 1:
             raise ValueError("Season cannot be less than one")
         ranks = {}
@@ -74,11 +75,12 @@ class Indexer:
                     # Fixes batch formats like 01 ~ 12
                     continue
             rank = 0
-            if parse.get("release_group") is not None and parse["release_group"].lower() in pref_groups:
+            if parse.get("release_group") is not None and parse["release_group"].lower() in [x.lower() for x in pref_groups]:
                 rank += 1
             if parse.get("video_resolution") is not None and pref_quality.replace("p", "") in parse[
                 "video_resolution"].lower():
                 rank += 2
+            is_bluray = False
             if prefer_bluray and parse.get("source") is not None:
                 if isinstance(parse["source"], str):
                     source = parse["source"]
@@ -87,7 +89,10 @@ class Indexer:
                 else:
                     raise Exception("Hopefully not possible")
                 if any(x in source.lower() for x in ["bd", "blu"]):
-                    rank += 1
+                    rank += 2
+                    is_bluray = True
+            if any(re.search(x, entry.title.lower(), re.IGNORECASE) for x in BATCH_KEYWORDS) or is_bluray:
+                rank += 2
             title_similarity = max(Indexer.__string_closeness(x.lower(), parse["anime_title"].lower()) for x in titles)
             if title_similarity < 0.5:
                 continue
@@ -99,7 +104,7 @@ class Indexer:
                         break
                 if a_id == -1:
                     logging.debug(f"Unsure about {parse['anime_title']}, doing anilist ID search")
-                    a_id = search.fetch(parse["anime_title"])[0]
+                    a_id = search.fetch(parse["anime_title"], sort="TITLE_ROMAJI")[0]
                     mismatched_anime_ids[parse["anime_title"]] = a_id
                 if a_id != anilist_id:
                     continue

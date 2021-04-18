@@ -6,11 +6,11 @@ from typing import Callable, List, Dict, Union
 
 class DataSource(ABC):
 
-    def __init__(self, query_formatter: Callable[[str], Union[str, Dict]]):
+    def __init__(self, query_formatter: Callable[[str, Dict], Union[str, Dict]]):
         self.query_formatter = query_formatter
 
     @abstractmethod
-    def fetch(self, query: str) -> List[str]:
+    def fetch(self, query: str, **kwargs) -> List[str]:
         pass
 
 
@@ -20,7 +20,7 @@ class WebScrapeSource(DataSource):
         self.__scraper = scraper
         super().__init__(query_formatter)
 
-    def fetch(self, query: str) -> List[str]:
+    def fetch(self, query: str, **kwargs) -> List[str]:
         return self.__scraper.scrape(self.query_formatter(query))
 
 
@@ -32,5 +32,5 @@ class APISource(DataSource):
         self.__request_parser = request_parser
         super().__init__(query_formatter)
 
-    def fetch(self, query: str) -> List[str]:
-        return self.__request_parser.fetch(url=self.__url, request_type=self.__request_type, data=self.query_formatter(query))
+    def fetch(self, query: str, **kwargs) -> List[str]:
+        return self.__request_parser.fetch(url=self.__url, request_type=self.__request_type, data=self.query_formatter(query, kwargs))

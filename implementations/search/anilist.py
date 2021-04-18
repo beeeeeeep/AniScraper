@@ -18,12 +18,12 @@ query($page: Int = 1 $id: Int $type: MediaType $isAdult: Boolean = false $search
 }
 '''
 
-query_formatter = lambda x: {
+query_formatter = lambda x, kwargs: {
     "query": query,
     "variables": {
         "page": 1,
         "search": x,
-        "sort": "SEARCH_MATCH",
+        "sort": "SEARCH_MATCH" if kwargs.get("sort") is None else kwargs["sort"],
         "type": "ANIME"
     }
 }
