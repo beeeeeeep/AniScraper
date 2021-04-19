@@ -55,6 +55,10 @@ class MainTest(unittest.TestCase):
     }
     m = mock_open(read_data="testing")
 
+    def setUp(self) -> None:
+        logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s] [%(levelname)s] %(message)s",
+                            datefmt="%d/%m/%Y %H:%M:%S")
+
     @patch("utils.files.open", m)
     @patch("main.store_anime_ids")
     @patch("main.os.symlink")
@@ -62,8 +66,6 @@ class MainTest(unittest.TestCase):
     @patch("main.load_anime_ids")
     @patch("service_classes.torrent_client.TorrentClient")
     def test_main_once(self, mock_torrent, mock_load_anime_ids, mock_mkdir, mock_symlink, mock_store_anime_ids):
-        logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s] [%(levelname)s] %(message)s",
-                            datefmt="%d/%m/%Y %H:%M:%S")
         config = load_test_config()
         mock_torrent.execute.return_value = True
         mock_load_anime_ids.return_value = {
@@ -79,3 +81,23 @@ class MainTest(unittest.TestCase):
         symlink_calls = [call(config["media"]["torrents"] + x[3], config["media"]["series"] + x[0] + "/Season 1") for x in self.CURRENT_ANIME.values()]
         mock_symlink.assert_has_calls(symlink_calls, any_order=True)
         self.assertEqual(len(mock_store_anime_ids.mock_calls), 1)
+        anime_ids = mock_store_anime_ids.mock_calls[0].args[1]
+        self.assertEqual(anime_ids["downloaded"], [101921, 101922, 17549])
+        self.assertEqual(anime_ids["blacklist"], [])
+        return anime_ids
+
+    @patch("utils.files.open", m)
+    @patch("main.store_anime_ids")
+    @patch("main.os.symlink")
+    @patch("main.os.mkdir")
+    @patch("main.load_anime_ids")
+    @patch("service_classes.torrent_client.TorrentClient")
+    def test_main_twice(self, mock_torrent, mock_load_anime_ids, mock_mkdir, mock_symlink, mock_store_anime_ids):
+        anime_ids = self.test_main_once()
+        anime_ids_original = anime_ids
+        config = load_test_config()
+        mock_load_anime_ids.return_value = anime_ids
+        run_check(ptw, indexer, mock_torrent, config["media"], config["preferences"])
+        self.assertEqual(len(mock_torrent.execute.mock_calls), 0)  # not called on second run
+        anime_ids = mock_store_anime_ids.mock_calls[0].args[1]
+        self.assertEqual(anime_ids, anime_ids_original)
