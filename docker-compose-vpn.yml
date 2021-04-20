@@ -12,6 +12,15 @@ services:
     ports:
       - "50000:50000"
       - "50000:50000/udp"
+      - "7777:7777"
+      - "6969:6969"
+      - "6969:6969/udp"
+      - "80:80"
+      - "80:80/udp"
+      - "1337:1337/udp"
+      - "451:451/udp"
+      - "6881:6881"
+      - "6881:6881/udp"
 
   apache:
     build:
@@ -74,6 +83,6 @@ services:
     volumes:
       - ./sonarr_data:/config
       - ${MEDIA_DIR_SERIES}:/tv
-      - ${TORRENT_DIR}:/downloads
+      - ${TORRENT_DIR}:/torrents
     ports:
       - 8989:8989
