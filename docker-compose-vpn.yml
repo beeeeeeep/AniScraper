@@ -9,6 +9,14 @@ services:
       - NET_ADMIN
     devices:
       - /dev/net/tun
+    dns:
+      - 8.8.4.4
+    tty: true
+    stdin_open: true
+    security_opt:
+      - label:disable
+    volumes:
+      - /dev/net:/dev/net:z
     ports:
       - "50000:50000"
       - "50000:50000/udp"
@@ -22,13 +30,6 @@ services:
       - "6881:6881"
       - "6881:6881/udp"
 
-  apache:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/apache/Dockerfile
-    ports:
-      - "5030:80"
-
   flood:
     hostname: flood
     image: jesec/flood
@@ -39,9 +40,9 @@ services:
       HOME: /config
     volumes:
       - ./rtorrent_config:/config
-      - ${MEDIA_DIR_SERIES}:/series
-      - ${MEDIA_DIR_FILMS}:/films
-      - ${TORRENT_DIR}:/torrents
+      - ${SERIES}:/series
+      - ${FILMS}:/films
+      - ${TORRENTS}:/torrents
     ports:
       - 0.0.0.0:3000:3000
 
@@ -54,9 +55,9 @@ services:
       HOME: /config
     volumes:
       - ./rtorrent_config:/config
-      - ${MEDIA_DIR_SERIES}:/series
-      - ${MEDIA_DIR_FILMS}:/films
-      - ${TORRENT_DIR}:/torrents
+      - ${SERIES}:/series
+      - ${FILMS}:/films
+      - ${TORRENTS}:/torrents
     network_mode: "service:openvpn"
     depends_on:
       - "openvpn"
@@ -68,9 +69,9 @@ services:
     volumes:
       - ./rtorrent_config:/config
       - ./anime_ids.json:/app/anime_ids.json
-      - ${MEDIA_DIR_SERIES}:/series
-      - ${MEDIA_DIR_FILMS}:/films
-      - ${TORRENT_DIR}:/torrents
+      - ${SERIES}:/series
+      - ${FILMS}:/films
+      - ${TORRENTS}:/torrents
     depends_on:
       - "rtorrent"
 
@@ -82,7 +83,7 @@ services:
       - TZ=Europe/London
     volumes:
       - ./sonarr_data:/config
-      - ${MEDIA_DIR_SERIES}:/tv
-      - ${TORRENT_DIR}:/torrents
+      - ${SERIES}:/tv
+      - ${TORRENTS}:/torrents
     ports:
       - 8989:8989

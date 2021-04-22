@@ -19,12 +19,11 @@ Install Docker for Windows, download a Linux distribution from the Windows store
 ### Setup
 
 ```bash
-git clone -b docker https://github.com/beeeeeeep/AniScraper
+git clone https://github.com/beeeeeeep/AniScraper
 cd AniScraper
-
 ```
 
-Modify config.py as necessary, setting media directories and account. Set USER and GROUP to the user which owns the media directories - run `id` to find this. Make sure to `chown` the media directories if needed.
+Modify config.yml as necessary, setting media directories and account. Set USER and GROUP to the user which owns the media directories - run `id` to find this. Make sure to `chown` the media directories if needed.
 
 ### VPN
 

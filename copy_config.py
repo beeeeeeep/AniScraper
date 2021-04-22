@@ -1,15 +1,17 @@
 import re
-from config import OPENVPN_PROFILE_PATH
 
+from utils.files import load_config
 
-with open("./config.py") as fp:
-    data = fp.readlines()
+config = load_config("./config.yml")
 
-data = [re.sub(r" ?= ?", "=", re.sub(r"\#.*$", "", x)) for x in data if any(x.split("=")[0].strip() == y for y in ["MEDIA_DIR_SERIES", "MEDIA_DIR_FILMS", "TORRENT_DIR", "OPENVPN_PROFILE_PATH", "DOCKER_USER", "DOCKER_GROUP"])]
+env_string = ""
+for k, v in list(config["media"].items()) + list(config["docker"].items()):
+    env_string += f"{k.upper()}={v}\n"
+
 with open(".env", "w") as fp:
-    fp.write("".join(data))
+    fp.write(env_string)
 
-with open(OPENVPN_PROFILE_PATH) as fp:
+with open(config["docker"]["openvpn_profile_path"]) as fp:
     ovpn = fp.read()
 
 if "BEGIN CERTIFICATE" not in ovpn:

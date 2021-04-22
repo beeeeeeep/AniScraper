@@ -6,3 +6,4 @@ rtorrent/
 rtorrent_config/
 sonarr_data/
 ./surfshark_configs/
+vpn_credentials.conf
