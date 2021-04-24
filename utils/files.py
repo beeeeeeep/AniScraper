@@ -15,16 +15,18 @@ def setup_dir(directory: str, search: Search) -> None:
         return
     with open("anime_ids.json") as fp:
         anime_ids = json.load(fp)
-    if anime_ids.get(directory) is None:
-        anime_ids[directory] = {}
+    if anime_ids.get("downloaded") is None:
+        anime_ids["downloaded"] = []
+    if anime_ids.get("blacklist") is None:
+        anime_ids["blacklist"] = []
     if not directory.endswith("/"):
         directory = directory + "/"
     for file in os.listdir(directory):
-        if file in anime_ids[directory]:
+        if file in anime_ids["downloaded"] + anime_ids["blacklist"]:
             continue
-        anime_id = search.fetch(file)
+        anime_id = search.fetch(file)[0]
         if anime_id is not None:
-            anime_ids[directory][file] = anime_id
+            anime_ids["downloaded"].append(anime_id)
             logging.info(f"Found ID for {file} - {anime_id}")
         else:
             logging.warning(f"Failed to find ID for {file}")

@@ -1,12 +1,15 @@
 media:
-  series: "~/series"  # series are symlinked into this dir
-  films: "~/films"  # films are symlinked into this dir
-  torrents: "~/torrents"  # torrent files are stored here
+  series: "./series"  # series are symlinked into this dir
+  films: "./films"  # films are symlinked into this dir
+  torrents: "./torrents"  # torrent files are stored here
 
 docker:
   openvpn_profile_path: "./surfshark.ovpn"  # ovpn profile file
   docker_user: 1000  # user who owns the media dirs. Find using "id" command.
   docker_group: 1000  # group of user who owns the media dirs. Find using "id" command.
+  docker_series: "/series"
+  docker_films: "/films"
+  docker_torrents: "/torrents"
 
 preferences:
   account: "aniscraper_test"  # anime list account

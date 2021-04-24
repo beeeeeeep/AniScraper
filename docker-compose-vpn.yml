@@ -40,9 +40,9 @@ services:
       HOME: /config
     volumes:
       - ./rtorrent_config:/config
-      - ${SERIES}:/series
-      - ${FILMS}:/films
-      - ${TORRENTS}:/torrents
+      - ${DOCKER_SERIES}:/series
+      - ${DOCKER_FILMS}:/films
+      - ${DOCKER_TORRENTS}:/torrents
     ports:
       - 0.0.0.0:3000:3000
 
