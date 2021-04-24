@@ -55,9 +55,9 @@ services:
       HOME: /config
     volumes:
       - ./rtorrent_config:/config
-      - ${SERIES}:/series
-      - ${FILMS}:/films
-      - ${TORRENTS}:/torrents
+      - ${DOCKER_SERIES}:/series
+      - ${DOCKER_FILMS}:/films
+      - ${DOCKER_TORRENTS}:/torrents
     network_mode: "service:openvpn"
     depends_on:
       - "openvpn"
@@ -69,9 +69,9 @@ services:
     volumes:
       - ./rtorrent_config:/config
       - ./anime_ids.json:/app/anime_ids.json
-      - ${SERIES}:/series
-      - ${FILMS}:/films
-      - ${TORRENTS}:/torrents
+      - ${DOCKER_SERIES}:/series
+      - ${DOCKER_FILMS}:/films
+      - ${DOCKER_TORRENTS}:/torrents
     depends_on:
       - "rtorrent"
 
@@ -83,7 +83,7 @@ services:
       - TZ=Europe/London
     volumes:
       - ./sonarr_data:/config
-      - ${SERIES}:/tv
-      - ${TORRENTS}:/torrents
+      - ${DOCKER_SERIES}:/tv
+      - ${DOCKER_TORRENTS}:/torrents
     ports:
       - 8989:8989
