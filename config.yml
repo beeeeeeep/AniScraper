@@ -1,7 +1,7 @@
 media:
-  series: "./series"  # series are symlinked into this dir
-  films: "./films"  # films are symlinked into this dir
-  torrents: "./torrents"  # torrent files are stored here
+  series: "/series"  # series are symlinked into this dir
+  films: "/films"  # films are symlinked into this dir
+  torrents: "/torrents"  # torrent files are stored here
 
 docker:
   openvpn_profile_path: "./surfshark.ovpn"  # ovpn profile file
