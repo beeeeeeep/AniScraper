@@ -1,7 +1,6 @@
 FROM python:latest
 
-RUN apt update && \
-    apt install -y deluge-console
+RUN apt update
 
 WORKDIR /app
 
