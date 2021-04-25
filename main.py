@@ -48,7 +48,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
             logging.warning(f"No AniList results for {anime_title}. Ignoring.")
             continue
 
-        if anilist_id in anime_ids["downloaded"] + anime_ids["blacklist"]:
+        if anilist_id in anime_ids["downloaded"].values() + anime_ids["blacklist"]:
             continue
 
         if a_year >= datetime.now().year - 1 and preferences["disable_new_anime"]:
@@ -101,7 +101,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
         os.mkdir(media_dir + anime_title)
         os.symlink(media_config["torrents"] + torrent_file_name,
                    media_dir + anime_title + "/Season 1" if anime.type == "TV" else "")
-        anime_ids["downloaded"].append(anilist_id)
+        anime_ids["downloaded"][anime_title] = anilist_id
         logging.info(f"Added ({anime.type}) {a_title_romaji}")
 
         time.sleep(1)  # comply with anilist rate limit

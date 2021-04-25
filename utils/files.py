@@ -16,17 +16,17 @@ def setup_dir(directory: str, search: Search) -> None:
     with open("anime_ids.json") as fp:
         anime_ids = json.load(fp)
     if anime_ids.get("downloaded") is None:
-        anime_ids["downloaded"] = []
+        anime_ids["downloaded"] = {}
     if anime_ids.get("blacklist") is None:
         anime_ids["blacklist"] = []
     if not directory.endswith("/"):
         directory = directory + "/"
     for file in os.listdir(directory):
-        if file in anime_ids["downloaded"] + anime_ids["blacklist"]:
+        if file in anime_ids["downloaded"].keys():
             continue
         anime_id = search.fetch(file)[0]
         if anime_id is not None:
-            anime_ids["downloaded"].append(anime_id)
+            anime_ids["downloaded"][file] = anime_id
             logging.info(f"Found ID for {file} - {anime_id}")
         else:
             logging.warning(f"Failed to find ID for {file}")
@@ -39,11 +39,11 @@ def load_anime_ids(filename: str):
     if not os.path.exists("anime_ids.json"):
         with open("anime_ids.json", "w") as fp:
             fp.write("{}")
-        return {"downloaded": [], "blacklist": []}
+        return {"downloaded": {}, "blacklist": []}
     with open(filename) as fp:
         anime_ids = json.load(fp)
         if anime_ids.get("downloaded") is None:
-            anime_ids["downloaded"] = []
+            anime_ids["downloaded"] = {}
         if anime_ids.get("blacklist") is None:
             anime_ids["blacklist"] = []
     return anime_ids
@@ -60,4 +60,7 @@ def load_config(path: str) -> Dict:
         for key in data["media"].keys():
             if not data["media"][key].endswith("/"):
                 data["media"][key] += "/"
+        for key in ["docker_series", "docker_films", "docker_torrents"]:
+            if not data["docker"][key].endswith("/"):
+                data["docker"][key] += "/"
         return data
