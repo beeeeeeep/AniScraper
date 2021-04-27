@@ -98,10 +98,11 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
             media_dir = media_config["films"]
         else:
             media_dir = media_config["series"]
-        logging.debug(f"mkdir: {media_dir + anime_title}")
-        os.mkdir(media_dir + anime_title)
+        if anime.type != "Movie":
+            logging.debug(f"mkdir: {media_dir + anime_title}")
+            os.mkdir(media_dir + anime_title)
         symlink_from = media_config["torrents"] + torrent_file_name
-        symlink_to = media_dir + anime_title + ("/Season 1" if anime.type == "TV" else "/")
+        symlink_to = media_dir + anime_title + ("/Season 1" if anime.type != "Movie" else "/")
         logging.debug(f"symlink: {symlink_from} -> {symlink_to}")
         os.symlink(symlink_from, symlink_to)
         anime_ids["downloaded"][anime_title] = anilist_id
