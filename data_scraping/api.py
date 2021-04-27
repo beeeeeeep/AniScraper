@@ -31,5 +31,7 @@ class APIParser:
             r = requests.get(url, data, headers=self.headers)
         else:
             r = requests.post(url, json=data, headers=self.headers)
+        if r.status_code != 200:
+            raise ConnectionError(f"Failed to fetch data: {r.status_code}")
         data = r.json()
         return self.__postprocess([x.select(data) for x in self.selectors])

@@ -34,7 +34,7 @@ class Scraper:
     def scrape(self, url: str) -> List:
         r = requests.get(url)
         if r.status_code != 200:
-            raise ConnectionError("Could not GET url")
+            raise ConnectionError(f"Failed to fetch data: {r.status_code}")
         soup = BeautifulSoup(r.text, self.parser)
         elements = soup.find_all(self.root[0], self.root[1])
         subelements = []
