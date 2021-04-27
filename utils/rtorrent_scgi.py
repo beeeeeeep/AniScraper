@@ -38,8 +38,6 @@ class RTorrentSCGI:
         headers_scgi = f"{len(headers_scgi)}:{headers_scgi}"
         request_body = f"{headers_scgi},{request_xml}"
 
-        print(request_body)
-
         try:
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             sock.connect(self.socket_path)

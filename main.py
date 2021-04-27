@@ -26,7 +26,7 @@ def get_torrent_name(torrent_url):
     return Torrent.from_string(r.content).name
 
 
-def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, docker_config: Dict, preferences: Dict, using_docker=False):
+def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, preferences: Dict):
     logging.info("Running scrape")
 
     # Get IDs in storage
@@ -95,12 +95,15 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
         if not success:
             raise RuntimeError("Torrent client error")
         if anime.type == "Movie":
-            media_dir = docker_config["docker_films"] if using_docker else media_config["films"]
+            media_dir = media_config["films"]
         else:
-            media_dir = docker_config["docker_series"] if using_docker else media_config["series"]
+            media_dir = media_config["series"]
+        logging.debug(f"mkdir: {media_dir + anime_title}")
         os.mkdir(media_dir + anime_title)
-        os.symlink(media_config["torrents"] + torrent_file_name,
-                   media_dir + anime_title + "/Season 1" if anime.type == "TV" else "")
+        symlink_from = media_config["torrents"] + torrent_file_name
+        symlink_to = media_dir + anime_title + ("/Season 1" if anime.type == "TV" else "/")
+        logging.debug(f"symlink: {symlink_from} -> {symlink_to}")
+        os.symlink(symlink_from, symlink_to)
         anime_ids["downloaded"][anime_title] = anilist_id
         logging.info(f"Added ({anime.type}) {a_title_romaji}")
 
@@ -127,7 +130,7 @@ def start():
     setup_dir(media_config["films"], search)
     setup_dir(media_config["series"], search)
 
-    schedule(run_check, preferences["interval"], ptw, indexer, torrent, media_config, docker_config, preferences, True)
+    schedule(run_check, preferences["interval"], ptw, indexer, torrent, media_config, preferences)
 
 
 def schedule(func: Callable, delay: int, *args):
@@ -137,7 +140,7 @@ def schedule(func: Callable, delay: int, *args):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(message)s",
+    logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s] [%(levelname)s] %(message)s",
                         datefmt="%d/%m/%Y %H:%M:%S")
 
     parser = ArgumentParser(description="An anime torrent automation tool.")
