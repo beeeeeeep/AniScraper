@@ -26,7 +26,7 @@ def get_torrent_name(torrent_url):
     return Torrent.from_string(r.content).name
 
 
-def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, preferences: Dict):
+def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, docker_config: Dict, preferences: Dict):
     logging.info("Running scrape")
 
     # Get IDs in storage
@@ -101,7 +101,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, p
         if anime.type != "Movie":
             logging.debug(f"mkdir: {media_dir + anime_title}")
             os.mkdir(media_dir + anime_title)
-        symlink_from = media_config["torrents"] + torrent_file_name
+        symlink_from = docker_config["torrents"] + torrent_file_name
         symlink_to = media_dir + anime_title + ("/Season 1" if anime.type != "Movie" else "/")
         logging.debug(f"symlink: {symlink_from} -> {symlink_to}")
         os.symlink(symlink_from, symlink_to)
@@ -131,7 +131,7 @@ def start():
     setup_dir(media_config["films"], search)
     setup_dir(media_config["series"], search)
 
-    schedule(run_check, preferences["interval"], ptw, indexer, torrent, media_config, preferences)
+    schedule(run_check, preferences["interval"], ptw, indexer, torrent, media_config, docker_config, preferences)
 
 
 def schedule(func: Callable, delay: int, *args):
