@@ -1,6 +1,7 @@
 import importlib
 import logging
 import os
+import re
 import sched
 import time
 from argparse import ArgumentParser
@@ -40,15 +41,18 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
         return
 
     for anime in ptw_anime:
+        anime_id = anime.anime_id
         anime_title = anime.title
 
-        # Get AniList ID
-        anilist_id, a_year, a_title_romaji, a_title_english = search.fetch(anime_title)
+        if anime_id in anime_ids["anilist_id_cache"]:
+            anilist_id, a_year, a_title_romaji, a_title_english = anime_ids["anilist_id_cache"][anime_id]
+        else:
+            anilist_id, a_year, a_title_romaji, a_title_english = search.fetch(anime_title)
+            anime_ids["anilist_id_cache"][anime_id] = [anilist_id, a_year, a_title_romaji, a_title_english]
+            time.sleep(1)
+
         if anilist_id is None:
             logging.warning(f"No AniList results for {anime_title}. Ignoring.")
-            continue
-
-        if anilist_id in list(anime_ids["downloaded"].values()) + anime_ids["blacklist"]:
             continue
 
         if a_year >= datetime.now().year - 1 and preferences["disable_new_anime"]:
@@ -90,25 +94,28 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
         logging.debug(f"Torrent file: {torrent_file_name}")
 
         # Add torrent using url
-        success = torrent_client.execute("add", torrent_url, media_config["torrents"])
-
-        if not success:
-            raise RuntimeError("Torrent client error")
+        # success = torrent_client.execute("add", torrent_url, media_config["torrents"])
+        #
+        # if not success:
+        #     raise RuntimeError("Torrent client error")
+        anime_title_clean = re.sub(r"[\\/*?:\"<>|]", "", anime_title)
         if anime.type == "Movie":
             media_dir = media_config["films"]
         else:
             media_dir = media_config["series"]
         if anime.type != "Movie":
-            logging.debug(f"mkdir: {media_dir + anime_title}")
-            os.mkdir(media_dir + anime_title)
-        symlink_from = docker_config["torrents"] + torrent_file_name
-        symlink_to = media_dir + anime_title + ("/Season 1" if anime.type != "Movie" else "/")
+            new_dir = media_dir + anime_title_clean
+            if os.path.exists(new_dir):
+                logging.warning(f"{new_dir} already exists, skipping")
+                continue
+            logging.debug(f"mkdir: {new_dir}")
+            os.mkdir(new_dir)
+        symlink_from = docker_config["docker_torrents"] + torrent_file_name
+        symlink_to = media_dir + anime_title_clean + ("/Season 1" if anime.type != "Movie" else "/")
         logging.debug(f"symlink: {symlink_from} -> {symlink_to}")
         os.symlink(symlink_from, symlink_to)
         anime_ids["downloaded"][anime_title] = anilist_id
         logging.info(f"Added ({anime.type}) {a_title_romaji}")
-
-        time.sleep(1)  # comply with anilist rate limit
 
     store_anime_ids("./anime_ids.json", anime_ids)
     logging.info("Scrape finished")

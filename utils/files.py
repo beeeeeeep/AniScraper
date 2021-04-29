@@ -19,6 +19,8 @@ def setup_dir(directory: str, search: Search) -> None:
         anime_ids["downloaded"] = {}
     if anime_ids.get("blacklist") is None:
         anime_ids["blacklist"] = []
+    if anime_ids.get("anilist_id_cache") is None:
+        anime_ids["anilist_id_cache"] = {}
     if not directory.endswith("/"):
         directory = directory + "/"
     for file in os.listdir(directory):
