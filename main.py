@@ -97,10 +97,10 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
         logger.debug(f"Torrent file: {torrent_file_name}")
 
         # Add torrent using url
-        # success = torrent_client.execute("add", torrent_url, media_config["torrents"])
-        #
-        # if not success:
-        #     raise RuntimeError("Torrent client error")
+        success = torrent_client.execute("add", torrent_url, media_config["torrents"])
+
+        if not success:
+            raise RuntimeError("Torrent client error")
         anime_title_clean = re.sub(r"[\\/*?:\"<>|]", "", anime_title)
         if anime.type == "Movie":
             media_dir = media_config["films"]
