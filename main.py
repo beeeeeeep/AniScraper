@@ -1,6 +1,7 @@
 import importlib
 import logging
 import os
+import re
 import sched
 import time
 from argparse import ArgumentParser
@@ -27,7 +28,7 @@ def get_torrent_name(torrent_url):
 
 
 def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, docker_config: Dict, preferences: Dict):
-    logging.info("Running scrape")
+    logger.info("Running scrape")
 
     # Get IDs in storage
     anime_ids = load_anime_ids("anime_ids.json")
@@ -36,30 +37,36 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
     try:
         ptw_anime = ptw.fetch(preferences["account"])
     except ConnectionError:
-        logging.error("Failed to connect to anime list service")
+        logger.error("Failed to connect to anime list service")
         return
 
     for anime in ptw_anime:
+        anime_id = anime.anime_id
         anime_title = anime.title
 
-        # Get AniList ID
-        anilist_id, a_year, a_title_romaji, a_title_english = search.fetch(anime_title)
+        if anime_id in anime_ids["anilist_id_cache"]:
+            anilist_id, a_year, a_title_romaji, a_title_english = anime_ids["anilist_id_cache"][anime_id]
+        else:
+            anilist_id, a_year, a_title_romaji, a_title_english = search.fetch(anime_title)
+            anime_ids["anilist_id_cache"][anime_id] = [anilist_id, a_year, a_title_romaji, a_title_english]
+            time.sleep(1)
+
         if anilist_id is None:
-            logging.warning(f"No AniList results for {anime_title}. Ignoring.")
+            logger.warning(f"No AniList results for {anime_title}. Ignoring.")
             continue
 
         if anilist_id in list(anime_ids["downloaded"].values()) + anime_ids["blacklist"]:
             continue
 
         if a_year >= datetime.now().year - 1 and preferences["disable_new_anime"]:
-            logging.info(f"{anime_title} is newer than 2020. Ignoring.")
+            logger.info(f"{anime_title} is newer than 2020. Ignoring.")
             continue
 
         # Query the indexer
         indexer_query = indexer.query(anime_title)
 
         if len(indexer_query) == 0:
-            logging.info(f"Could not find anime with title {anime_title} on indexer. Ignoring.")
+            logger.info(f"Could not find anime with title {anime_title} on indexer. Ignoring.")
             continue
         top_ranks = Indexer.rank(
             indexer_query,
@@ -79,7 +86,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
             recent = datetime.now().year - 3
             if a_year > recent:
                 error_msg += f"This anime aired later than {recent}, so it may not have batches yet. Try adding it on Sonarr."
-            logging.info(error_msg)
+            logger.info(error_msg)
             continue
 
         torrent_url = top_ranks[0].link
@@ -87,33 +94,36 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
         # GET .torrent file, parse and get torrent file name
         torrent_file_name = get_torrent_name(torrent_url)
 
-        logging.debug(f"Torrent file: {torrent_file_name}")
+        logger.debug(f"Torrent file: {torrent_file_name}")
 
         # Add torrent using url
         success = torrent_client.execute("add", torrent_url, media_config["torrents"])
 
         if not success:
             raise RuntimeError("Torrent client error")
+        anime_title_clean = re.sub(r"[\\/*?:\"<>|]", "", anime_title)
         if anime.type == "Movie":
             media_dir = media_config["films"]
         else:
             media_dir = media_config["series"]
         if anime.type != "Movie":
-            logging.debug(f"mkdir: {media_dir + anime_title}")
-            os.mkdir(media_dir + anime_title)
-        symlink_from = docker_config["torrents"] + torrent_file_name
-        symlink_to = media_dir + anime_title + ("/Season 1" if anime.type != "Movie" else "/")
+            new_dir = media_dir + anime_title_clean
+            if os.path.exists(new_dir):
+                logger.warning(f"{new_dir} already exists, skipping")
+                continue
+            logger.debug(f"mkdir: {new_dir}")
+            os.mkdir(new_dir)
+        symlink_from = docker_config["docker_torrents"] + torrent_file_name
+        symlink_to = media_dir + anime_title_clean + ("/Season 1" if anime.type != "Movie" else "/")
         while not os.path.exists(symlink_from):
             time.sleep(1)
-        logging.debug(f"symlink: {symlink_from} -> {symlink_to}")
+        logger.debug(f"symlink: {symlink_from} -> {symlink_to}")
         os.symlink(symlink_from, symlink_to)
         anime_ids["downloaded"][anime_title] = anilist_id
-        logging.info(f"Added ({anime.type}) {a_title_romaji}")
-
-        time.sleep(1)  # comply with anilist rate limit
+        logger.info(f"Added ({anime.type}) {a_title_romaji}")
 
     store_anime_ids("./anime_ids.json", anime_ids)
-    logging.info("Scrape finished")
+    logger.info("Scrape finished")
 
 
 def start():
@@ -143,8 +153,9 @@ def schedule(func: Callable, delay: int, *args):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s] [%(levelname)s] %(message)s",
-                        datefmt="%d/%m/%Y %H:%M:%S")
+    logging.basicConfig(format="[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%d/%m/%Y %H:%M:%S")
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
 
     parser = ArgumentParser(description="An anime torrent automation tool.")
     start()
