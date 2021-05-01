@@ -1,15 +1,18 @@
 import json
+import logging
 import os
 import time
 from typing import Dict
 
-from service_classes.search import Search
-import logging
 import yaml
+
+from service_classes.search import Search
+
+logger = logging.getLogger(__name__)
 
 
 def setup_dir(directory: str, search: Search) -> None:
-    logging.info(f"Preparing directory {directory}")
+    logger.info(f"Preparing directory {directory}")
     if not os.path.isdir(directory):
         os.mkdir(directory)
         return
@@ -29,9 +32,9 @@ def setup_dir(directory: str, search: Search) -> None:
         anime_id = search.fetch(file)[0]
         if anime_id is not None:
             anime_ids["downloaded"][file] = anime_id
-            logging.info(f"Found ID for {file} - {anime_id}")
+            logger.info(f"Found ID for {file} - {anime_id}")
         else:
-            logging.warning(f"Failed to find ID for {file}")
+            logger.warning(f"Failed to find ID for {file}")
         time.sleep(2)
     with open("anime_ids.json", "w") as fp:
         json.dump(anime_ids, fp, indent=4)

@@ -1,13 +1,14 @@
-import itertools
 import logging
 import re
-import textdistance
 from typing import List
 
 import anitopy
+import textdistance
 
 from data_scraping.datasource import DataSource
 from implementations.search.anilist import search
+
+logger = logging.getLogger(__name__)
 
 
 class IndexerResult:
@@ -52,6 +53,9 @@ class Indexer:
         for entry, parse in anitopy_parse:
             if entry.seeders < min_seeders:
                 continue
+            if parse["anime_title"] is None:
+                logger.warning(f"Failed to parse title from {entry.title}")
+                continue
             if re.search(r"\([0-9]{4}.*\)", parse["anime_title"]) is not None:
                 parse["anime_title"] = re.sub(r"\([0-9]{4}.*\)", "", parse["anime_title"])
             if re.search(rf"S0*{season}", parse["anime_title"]) is not None:
@@ -75,7 +79,8 @@ class Indexer:
                     # Fixes batch formats like 01 ~ 12
                     continue
             rank = 0
-            if parse.get("release_group") is not None and parse["release_group"].lower() in [x.lower() for x in pref_groups]:
+            if parse.get("release_group") is not None and parse["release_group"].lower() in [x.lower() for x in
+                                                                                             pref_groups]:
                 rank += 1
             if parse.get("video_resolution") is not None and pref_quality.replace("p", "") in parse[
                 "video_resolution"].lower():
@@ -103,7 +108,7 @@ class Indexer:
                         a_id = v
                         break
                 if a_id == -1:
-                    logging.debug(f"Unsure about {parse['anime_title']}, doing anilist ID search")
+                    logger.debug(f"Unsure about {parse['anime_title']}, doing anilist ID search")
                     a_id = search.fetch(parse["anime_title"], sort="TITLE_ROMAJI")[0]
                     mismatched_anime_ids[parse["anime_title"]] = a_id
                 if a_id != anilist_id:
