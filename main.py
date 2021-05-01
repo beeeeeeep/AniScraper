@@ -114,10 +114,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
             logger.debug(f"mkdir: {new_dir}")
             os.mkdir(new_dir)
         symlink_from = docker_config["docker_torrents"] + torrent_file_name
-        symlink_to = media_dir + anime_title_clean + ("/Season 1" if anime.type != "Movie" else "/")
-        while not os.path.exists(media_config["torrents"] + torrent_file_name):
-            logger.debug(f"{media_config['torrents'] + torrent_file_name} does not exist")
-            time.sleep(1)
+        symlink_to = media_dir + anime_title_clean + ("/Season 1" if anime.type != "Movie" else "")
         logger.debug(f"symlink: {symlink_from} -> {symlink_to}")
         os.symlink(symlink_from, symlink_to)
         anime_ids["downloaded"][anime_title] = anilist_id
