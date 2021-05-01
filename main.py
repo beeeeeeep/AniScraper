@@ -46,6 +46,7 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
 
         if anime_id in anime_ids["anilist_id_cache"]:
             anilist_id, a_year, a_title_romaji, a_title_english = anime_ids["anilist_id_cache"][anime_id]
+            logger.debug("Fetched anilist details from cache")
         else:
             anilist_id, a_year, a_title_romaji, a_title_english = search.fetch(anime_title)
             anime_ids["anilist_id_cache"][anime_id] = [anilist_id, a_year, a_title_romaji, a_title_english]
@@ -53,6 +54,10 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
 
         if anilist_id is None:
             logger.warning(f"No AniList results for {anime_title}. Ignoring.")
+            continue
+
+        if a_title_romaji is None and a_title_english is None:
+            logger.warning(f"Both romaji and english titles were None for {anilist_id}")
             continue
 
         if anilist_id in list(anime_ids["downloaded"].values()) + anime_ids["blacklist"]:

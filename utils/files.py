@@ -51,6 +51,8 @@ def load_anime_ids(filename: str):
             anime_ids["downloaded"] = {}
         if anime_ids.get("blacklist") is None:
             anime_ids["blacklist"] = []
+        if anime_ids.get("anilist_id_cache") is None:
+            anime_ids["anilist_id_cache"] = {}
     return anime_ids
 
 
