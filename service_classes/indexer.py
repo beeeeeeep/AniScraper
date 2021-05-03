@@ -56,6 +56,7 @@ class Indexer:
             if parse["anime_title"] is None:
                 logger.warning(f"Failed to parse title from {entry.title}")
                 continue
+            logger.debug(parse["anime_title"])
             if re.search(r"\([0-9]{4}.*\)", parse["anime_title"]) is not None:
                 parse["anime_title"] = re.sub(r"\([0-9]{4}.*\)", "", parse["anime_title"])
             if re.search(rf"S0*{season}", parse["anime_title"]) is not None:

@@ -44,6 +44,8 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
         anime_id = anime.anime_id
         anime_title = anime.title
 
+        logger.debug(f"Processing {anime_title}")
+
         if anime_id in anime_ids["anilist_id_cache"]:
             anilist_id, a_year, a_title_romaji, a_title_english = anime_ids["anilist_id_cache"][anime_id]
             logger.debug("Fetched anilist details from cache")
@@ -54,10 +56,6 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
 
         if anilist_id is None:
             logger.warning(f"No AniList results for {anime_title}. Ignoring.")
-            continue
-
-        if a_title_romaji is None and a_title_english is None:
-            logger.warning(f"Both romaji and english titles were None for {anilist_id}")
             continue
 
         if anilist_id in list(anime_ids["downloaded"].values()) + anime_ids["blacklist"]:
@@ -73,10 +71,13 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
         if len(indexer_query) == 0:
             logger.info(f"Could not find anime with title {anime_title} on indexer. Ignoring.")
             continue
+
+        logger.debug(f"English title: {a_title_english}, romaji title: {a_title_romaji}")
+
         top_ranks = Indexer.rank(
             indexer_query,
             anilist_id=anilist_id,
-            titles=[a_title_romaji, a_title_english],
+            titles=[x for x in [a_title_romaji, a_title_english] if x is not None],
             pref_groups=preferences["groups"],
             pref_quality=preferences["quality"],
             season=1,
@@ -158,7 +159,7 @@ def schedule(func: Callable, delay: int, *args):
 if __name__ == "__main__":
     logging.basicConfig(format="[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%d/%m/%Y %H:%M:%S")
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     parser = ArgumentParser(description="An anime torrent automation tool.")
     start()
