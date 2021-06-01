@@ -99,7 +99,8 @@ class Indexer:
                     is_bluray = True
             if any(re.search(x, entry.title.lower(), re.IGNORECASE) for x in BATCH_KEYWORDS) or is_bluray:
                 rank += 2
-            title_similarity = max(Indexer.__string_closeness(x.lower(), parse["anime_title"].lower()) for x in titles)
+            title_similarity = max(Indexer.__string_closeness(x.lower(), parse["anime_title"].lower()) for x in
+                                   titles + [" ".join(titles)])
             if title_similarity < 0.5:
                 continue
             if title_similarity < 0.8:
