@@ -61,6 +61,10 @@ def run_check(ptw, indexer, torrent_client: TorrentClient, media_config: Dict, d
         if anilist_id in list(anime_ids["downloaded"].values()) + anime_ids["blacklist"]:
             continue
 
+        if a_year is None:
+            logger.warning(f"Anime {anime_title} had no date?")
+            continue
+
         if a_year >= datetime.now().year - 1 and preferences["disable_new_anime"]:
             logger.info(f"{anime_title} is newer than 2020. Ignoring.")
             continue
