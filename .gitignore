@@ -1,6 +1,7 @@
 __pycache__/
 .vscode/
 .venv/
+.idea/
 surfshark_configs/
 rtorrent/
 rtorrent_config/
