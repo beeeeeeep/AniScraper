@@ -92,8 +92,6 @@ services:
       - ${DOCKER_SERIES}:/series
       - ${DOCKER_FILMS}:/films
       - ${DOCKER_TORRENTS}:/torrents
-    depends_on:
-      - "rtorrent"
 
   sonarr:
     image: linuxserver/sonarr
