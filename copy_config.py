@@ -1,3 +1,4 @@
+import os
 import re
 
 from utils.files import load_config
@@ -10,6 +11,9 @@ for k, v in list(config["media"].items()) + list(config["docker"].items()):
 
 with open(".env", "w") as fp:
     fp.write(env_string)
+
+if not os.path.exists(config["docker"]["openvpn_profile_path"]):
+    exit()
 
 with open(config["docker"]["openvpn_profile_path"]) as fp:
     ovpn = fp.read()

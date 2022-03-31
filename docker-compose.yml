@@ -1,24 +1,25 @@
+version: "3.9"
 services:
-  apache:
+  openvpn:
+    profiles:
+      - vpn
     build:
       context: .
-      dockerfile: ./dockerfiles/apache/Dockerfile
-    ports:
-      - "5030:80"
-
-  flood:
-    hostname: flood
-    image: jesec/flood
-    user: 1000:1000
-    restart: unless-stopped
-    command: --port 3000
-    environment:
-      HOME: /config
+      dockerfile: ./dockerfiles/openvpn/Dockerfile
+      args: 
+        - OPENVPN_PROFILE_PATH=${OPENVPN_PROFILE_PATH}
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    dns:
+      - 8.8.4.4
+    tty: true
+    stdin_open: true
+    security_opt:
+      - label:disable
     volumes:
-      - ./rtorrent_config:/config
-      - ${MEDIA_DIR_SERIES}:/series
-      - ${MEDIA_DIR_FILMS}:/films
-      - ${TORRENT_DIR}:/torrents
+      - /dev/net:/dev/net:z
     ports:
       - "50000:50000"
       - "50000:50000/udp"
@@ -32,21 +33,54 @@ services:
       - "6881:6881"
       - "6881:6881/udp"
 
-  rtorrent:
-    image: jesec/rtorrent
+  flood:
+    hostname: flood
+    image: jesec/flood
     user: 1000:1000
     restart: unless-stopped
-    command: -o network.port_range.set=50000-50000,system.daemon.set=true
-    ports:
-      - "50000:50000"
-      - "50000:50000/udp"
+    command: --port 3000
     environment:
       HOME: /config
     volumes:
       - ./rtorrent_config:/config
-      - ${MEDIA_DIR_SERIES}:/series
-      - ${MEDIA_DIR_FILMS}:/films
-      - ${TORRENT_DIR}:/torrents
+      - ${DOCKER_SERIES}:/series
+      - ${DOCKER_FILMS}:/films
+      - ${DOCKER_TORRENTS}:/torrents
+    ports:
+      - 0.0.0.0:3000:3000
+
+  rtorrent:
+    profiles:
+      - novpn
+    image: jesec/rtorrent
+    user: ${DOCKER_USER}:${DOCKER_GROUP}
+    restart: unless-stopped
+    command: -o network.port_range.set=50000-50000,system.daemon.set=true
+    environment:
+      HOME: /config
+    volumes:
+      - ./rtorrent_config:/config
+      - ${DOCKER_SERIES}:/series
+      - ${DOCKER_FILMS}:/films
+      - ${DOCKER_TORRENTS}:/torrents
+
+  rtorrent-vpn:
+    profiles:
+      - vpn
+    image: jesec/rtorrent
+    user: ${DOCKER_USER}:${DOCKER_GROUP}
+    restart: unless-stopped
+    command: -o network.port_range.set=50000-50000,system.daemon.set=true
+    environment:
+      HOME: /config
+    volumes:
+      - ./rtorrent_config:/config
+      - ${DOCKER_SERIES}:/series
+      - ${DOCKER_FILMS}:/films
+      - ${DOCKER_TORRENTS}:/torrents
+    network_mode: "service:openvpn"
+    depends_on:
+      - "openvpn"
 
   aniscraper:
     build:
@@ -54,9 +88,10 @@ services:
       dockerfile: ./dockerfiles/aniscraper/Dockerfile
     volumes:
       - ./rtorrent_config:/config
-      - ${MEDIA_DIR_SERIES}:/series
-      - ${MEDIA_DIR_FILMS}:/films
-      - ${TORRENT_DIR}:/torrents
+      - ./anime_ids.json:/app/anime_ids.json
+      - ${DOCKER_SERIES}:/series
+      - ${DOCKER_FILMS}:/films
+      - ${DOCKER_TORRENTS}:/torrents
     depends_on:
       - "rtorrent"
 
@@ -68,8 +103,7 @@ services:
       - TZ=Europe/London
     volumes:
       - ./sonarr_data:/config
-      - ${MEDIA_DIR_SERIES}:/tv
-      - ${TORRENT_DIR}:/torrents
+      - ${DOCKER_SERIES}:/tv
+      - ${DOCKER_TORRENTS}:/torrents
     ports:
       - 8989:8989
-      

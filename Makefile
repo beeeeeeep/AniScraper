@@ -2,18 +2,28 @@
 
 dev:
 	python3 copy_config.py
-	sudo docker-compose -f $(dc-yml) up
+	sudo docker-compose up
 
-devd:
+run:
 	python3 copy_config.py
-	sudo docker-compose -f $(dc-yml) up -d
+	sudo docker-compose --profile novpn up -d
+
+run-vpn:
+	python3 copy_config.py
+	sudo docker-compose --profile vpn up -d
 
 build:
 	python3 copy_config.py
-	sudo docker-compose -f $(dc-yml) build
+	sudo docker-compose --profile novpn build
+
+build-vpn:
+	python3 copy_config.py
+	sudo docker-compose --profile vpn build
 
 restart:
-	sudo docker-compose -f $(dc-yml) restart
+	sudo docker-compose restart
 
 clean:
-	sudo docker-compose -f $(dc-yml) down
+	sudo docker-compose stop
+	sudo docker-compose --profile vpn down --rmi all
+	sudo docker-compose --profile novpn down --rmi all
